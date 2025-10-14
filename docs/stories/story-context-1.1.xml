@@ -1,0 +1,191 @@
+<story-context id="epic-1-story-1" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Telegram Bot Registration &amp; Webhook Setup</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-12T20:58:52+03:00</generatedAt>
+    <generator>BMAD Story Context Workflow v6</generator>
+    <sourceStoryPath>d:\Vibe Coding\Finance-Tracker-v2.0\docs\stories\story-1.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>system administrator</asA>
+    <iWant>set up the Telegram bot with Convex webhook integration</iWant>
+    <soThat>the bot can receive and process user messages reliably</soThat>
+    <tasks>
+      <task id="1" ac="6">Project Initialization - Initialize Node.js project with TypeScript, install Convex CLI, run convex dev, configure convex.json</task>
+      <task id="2" ac="9">Telegram Bot Registration - Register bot with @BotFather, obtain token, store in Convex environment variables, document steps</task>
+      <task id="3" ac="1,3,4">Webhook HTTP Action Implementation - Create webhook.ts, implement httpAction handler, parse Telegram payload, extract user info and message, return 200 OK, add logging</task>
+      <task id="4" ac="2">Webhook Registration Implementation - Create setWebhook.ts, call Telegram setWebhook API, construct webhook URL, handle responses</task>
+      <task id="5" ac="8">Error Handling &amp; Validation - Validate webhook payload structure, handle malformed JSON, log errors, return 200 OK on invalid payloads</task>
+      <task id="6" ac="4,5">Testing &amp; Performance Validation - Deploy to production, register webhook, send test messages, verify logs, measure response time, simulate concurrent requests</task>
+      <task id="7" ac="9">Documentation - Document environment variables, webhook registration, deployment workflow, create troubleshooting guide</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Webhook Endpoint Created - Convex HTTP Action at /telegram/webhook receives POST requests from Telegram and returns 200 OK</criterion>
+    <criterion id="AC2">Webhook Registration - HTTP Action at /telegram/setWebhook successfully registers webhook URL with Telegram Bot API</criterion>
+    <criterion id="AC3">Message Parsing - Webhook extracts Telegram user ID, username, first name, last name, and message text from update payload</criterion>
+    <criterion id="AC4">Response Time - Webhook processing completes within 500ms from request receipt to response (measured via Convex logs)</criterion>
+    <criterion id="AC5">Concurrent Handling - System handles 100+ concurrent webhook requests without errors or queueing</criterion>
+    <criterion id="AC6">Environment Configuration - Telegram bot token stored securely in Convex environment variables (not hardcoded)</criterion>
+    <criterion id="AC7">HTTPS Only - Webhook endpoint uses HTTPS with TLS 1.2+ (Convex default)</criterion>
+    <criterion id="AC8">Error Handling - Invalid payloads logged and return 200 OK to prevent Telegram retries</criterion>
+    <criterion id="AC9">Documentation - Setup instructions documented including BotFather registration and webhook configuration</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Module Dependencies (lines 103-116)</section>
+        <snippet>telegram/webhook.ts depends on: users/getByTelegramId (authentication), users/register (first-time users), users/updateProfile (language selection), messages/create (store conversation), lib/commandRouter (command detection), telegram/sendMessage (response delivery)</snippet>
+        <relevance>Defines webhook module dependencies for future stories</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Function Inputs/Outputs (lines 118-133)</section>
+        <snippet>telegram/webhook.ts: Input - HTTP POST request with Telegram update JSON; Output - HTTP 200 OK response; Side Effects - User registration, profile update, message storage, Telegram API call</snippet>
+        <relevance>Specifies webhook function contract</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>API Contracts - Telegram Webhook Payload (lines 264-291)</section>
+        <snippet>POST payload structure with update_id, message object containing from (id, first_name, username), chat, date, text fields</snippet>
+        <relevance>Defines expected input format for webhook parser</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Convex HTTP Actions (lines 325-339)</section>
+        <snippet>Webhook Endpoint: POST https://&lt;deployment-name&gt;.convex.site/telegram/webhook, Content-Type: application/json, Response: 200 OK; Webhook Registration: POST https://&lt;deployment-name&gt;.convex.site/telegram/setWebhook?token=&lt;TELEGRAM_BOT_TOKEN&gt;</snippet>
+        <relevance>Specifies webhook endpoint URLs and registration API</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Performance Requirements (lines 551-574)</section>
+        <snippet>Webhook Processing: &lt; 500ms from Telegram POST to function start; Handle 100+ concurrent requests; Support 500 requests/minute burst; 95th percentile: all interactions complete within 2 seconds</snippet>
+        <relevance>Defines performance targets for webhook implementation</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Dependencies - package.json (lines 719-752)</section>
+        <snippet>Dependencies: convex ^1.16.5, zod ^3.23.8, pino ^9.4.0, @sentry/node ^8.33.1; DevDependencies: typescript ^5.6.3, vitest ^2.1.2, eslint ^9.12.0, prettier ^3.3.3</snippet>
+        <relevance>Complete list of packages to install in Task 1</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Integration - Telegram Bot API (lines 779-834)</section>
+        <snippet>Authentication via Bot Token from @BotFather; Endpoints: POST /bot&lt;token&gt;/setWebhook, /bot&lt;token&gt;/sendMessage; Rate Limits: 30 messages/second per bot; Environment: TELEGRAM_BOT_TOKEN, CONVEX_URL</snippet>
+        <relevance>Telegram Bot API integration details and configuration</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Architecture Pattern &amp; Data Flow (lines 14-103)</section>
+        <snippet>Architecture: Serverless Monolith (single Convex deployment); Data Flow: User Message → Telegram → Convex Webhook → [AI Intent Detection] → Manual Router → Database Update → Response Generation → Telegram Delivery; Layer 1 HTTP Actions: telegram/webhook.ts (receives all messages), telegram/setWebhook.ts (one-time registration)</snippet>
+        <relevance>Defines architectural pattern and webhook's role as Layer 1 entry point</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR1: Performance (lines 276-283)</section>
+        <snippet>Response Time: AI agent responds within 2 seconds for 95% of interactions; Message Processing: Handle Telegram webhook within 1 second; Concurrent Users: Support 5,000+ simultaneous users without degradation; Database Queries: All queries complete in &lt; 500ms</snippet>
+        <relevance>Performance targets applicable to webhook processing</relevance>
+      </doc>
+      <doc>
+        <path>d:\Vibe Coding\Finance-Tracker-v2.0\docs\PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR4: Security &amp; Privacy (lines 301-308)</section>
+        <snippet>Authentication: Telegram-based authentication (no passwords); Data Isolation: Complete user data isolation; Encryption: Data encrypted at rest and in transit (Convex default); API Security: Secure webhook validation for Telegram integration; Environment variables for bot token</snippet>
+        <relevance>Security requirements for webhook and token management</relevance>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- No existing code - greenfield project. Story 1.1 creates foundation. -->
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="convex" version="^1.16.5">Backend runtime, database, HTTP actions platform</package>
+        <package name="zod" version="^3.23.8">Schema validation for webhook payloads</package>
+        <package name="pino" version="^9.4.0">Structured JSON logging</package>
+        <package name="@sentry/node" version="^8.33.1">Error tracking and monitoring</package>
+        <devPackage name="typescript" version="^5.6.3">Type safety with strict mode</devPackage>
+        <devPackage name="vitest" version="^2.1.2">Testing framework (for future stories)</devPackage>
+        <devPackage name="eslint" version="^9.12.0">Code linting</devPackage>
+        <devPackage name="prettier" version="^3.3.3">Code formatting</devPackage>
+        <devPackage name="@types/node" version="^20.16.0">Node.js TypeScript types</devPackage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="arch-1">Layer 1 - HTTP Actions: Webhook must be implemented as Convex HTTP Action, not query or mutation. Entry point for all user interactions.</constraint>
+    <constraint id="arch-2">Stateless Design: Webhook function must be stateless - no persistent connections or in-memory session storage.</constraint>
+    <constraint id="arch-3">Serverless Pattern: All business logic resides in Convex functions - no external servers or polling mechanisms.</constraint>
+    <constraint id="sec-1">Token Security: Telegram bot token MUST be stored in Convex environment variables, never hardcoded in source code.</constraint>
+    <constraint id="sec-2">HTTPS Only: Webhook endpoint must use HTTPS with TLS 1.2+ (provided by Convex platform).</constraint>
+    <constraint id="perf-1">Response Time: Webhook processing must complete within 500ms from request receipt to response (measured in Convex logs).</constraint>
+    <constraint id="perf-2">Concurrent Handling: Must support 100+ concurrent webhook requests without queueing or errors.</constraint>
+    <constraint id="error-1">Graceful Degradation: Invalid webhook payloads must return 200 OK to prevent Telegram retry loops.</constraint>
+    <constraint id="logging-1">Structured Logging: All webhook events must be logged with Pino in JSON format for observability.</constraint>
+    <constraint id="ts-1">TypeScript Strict Mode: All code must use TypeScript with strict type checking enabled.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>httpAction</name>
+      <kind>Convex HTTP Action</kind>
+      <signature>export const webhook = httpAction(async (ctx, request) => { ... })</signature>
+      <path>convex/telegram/webhook.ts</path>
+      <description>HTTP Action handler for Telegram webhook. Receives POST requests with Telegram Update payloads and returns HTTP 200 OK.</description>
+    </interface>
+    <interface>
+      <name>Telegram Update API</name>
+      <kind>External API - Telegram</kind>
+      <signature>POST https://api.telegram.org/bot&lt;token&gt;/setWebhook with body: { url: string }</signature>
+      <path>External - Telegram Bot API</path>
+      <description>Telegram setWebhook API to register webhook URL. Called from setWebhook.ts HTTP Action.</description>
+    </interface>
+    <interface>
+      <name>Convex Environment Variables</name>
+      <kind>Configuration</kind>
+      <signature>process.env.TELEGRAM_BOT_TOKEN</signature>
+      <path>Convex Dashboard - Environment Variables</path>
+      <description>Access bot token from Convex environment variables. Must be configured in dashboard before webhook registration.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      No unit testing framework required for Epic 1 (deferred to Epic 2+). Integration testing via Convex deployment and real Telegram messages. Performance validation via Convex dashboard metrics. Error scenarios tested by sending malformed payloads. Concurrency tested with multiple Telegram accounts sending simultaneous messages.
+    </standards>
+    
+    <locations>
+      <!-- No test directories yet - greenfield project -->
+      <!-- Future: convex/telegram/webhook.test.ts -->
+    </locations>
+    
+    <ideas>
+      <idea ac="AC1">Integration Test: Deploy webhook to Convex, send test message via Telegram, verify 200 OK response in Convex logs</idea>
+      <idea ac="AC2">Integration Test: Execute setWebhook HTTP Action, verify Telegram API returns success, confirm webhook info via getWebhookInfo</idea>
+      <idea ac="AC3">Integration Test: Send message with user info, verify webhook logs extracted telegramId, username, firstName, lastName, message text</idea>
+      <idea ac="AC4">Performance Test: Send single message, measure time from Telegram POST to Convex response in logs (target &lt; 500ms)</idea>
+      <idea ac="AC5">Load Test: Use 10+ Telegram accounts to send 100+ messages within 10 seconds, verify all processed without errors</idea>
+      <idea ac="AC6">Configuration Test: Verify TELEGRAM_BOT_TOKEN accessible via process.env, not present in source code</idea>
+      <idea ac="AC7">Security Test: Verify webhook URL uses HTTPS scheme (automatic via Convex platform)</idea>
+      <idea ac="AC8">Error Handling Test: Send malformed JSON payload, verify 200 OK response and error logged (no 4xx/5xx)</idea>
+      <idea ac="AC9">Documentation Test: Follow README setup instructions on clean environment, verify bot functional</idea>
+    </ideas>
+  </tests>
+</story-context>

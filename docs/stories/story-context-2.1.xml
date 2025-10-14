@@ -1,0 +1,409 @@
+<story-context id="story-2.1-context" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.1</storyId>
+    <title>Create Account with Natural Language</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>d:/Vibe Coding/Finance-Tracker-v2.0/docs/stories/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a registered user</asA>
+    <iWant>to create financial accounts (bank, cash, credit card, digital wallet) using natural language like "أنشئ حساب محفظة برصيد 500 جنيه" or "Create cash account with 200 EGP"</iWant>
+    <soThat>I can manage multiple accounts and track balances across all my financial sources within 30 seconds</soThat>
+    <tasks>
+      - Task 1: Create Account Creation Command Handler
+      - Task 2: Create Account Creation Mutation
+      - Task 3: Create Account Query Functions
+      - Task 4: Create Confirmation Workflow Handler
+      - Task 5: Create Pending Actions Table &amp; Handlers
+      - Task 6: Update Webhook Callback Handler
+      - Task 7: Create Success Response Handler
+      - Task 8: Create Clarification Handler
+      - Task 9: Register Command in Command Registry
+      - Task 10: Update Constants and Language Files
+      - Task 11: Enhance NL Parser for Account Intents
+      - Task 12: Create Keyboard Helpers for Accounts
+      - Task 13: Update Schema with Accounts Table
+      - Task 14: Create Unit Tests
+      - Task 15: Integration Testing
+      - Task 16: E2E Testing with Playwright
+      - Task 17: Documentation &amp; Deployment
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Intent Detection - AI parser (RORK) detects "create_account" intent from natural language with 85%+ confidence, extracting accountType, initialBalance, currency, and optional accountName</criterion>
+    <criterion id="AC2">Entity Extraction - System extracts account type ("bank", "cash", "credit_card", "digital_wallet"), initial balance (number), currency ("EGP", "USD", "SAR", "EUR"), and optional custom name from user message</criterion>
+    <criterion id="AC3">Bilingual Support - Accepts both Arabic ("أنشئ حساب بنك برصيد 1000 جنيه") and English ("Create bank account 1000 EGP") inputs with equivalent accuracy</criterion>
+    <criterion id="AC4">Confirmation Workflow - Before creating account, sends confirmation message showing extracted details (type, name, balance, currency) with inline keyboard buttons: "تأكيد ✅" (confirm) / "إلغاء ❌" (cancel)</criterion>
+    <criterion id="AC5">Account Creation - On confirmation, creates account record with userId, type, name, balance, currency, createdAt, isDefault, isDeleted</criterion>
+    <criterion id="AC6">Default Account Handling - If user has zero accounts, automatically sets first account as default; if user has existing accounts, asks "هل تريد تعيينه كحساب افتراضي؟" with Yes/No buttons</criterion>
+    <criterion id="AC7">Success Response - Sends language-specific success message with account summary and displays all accounts overview</criterion>
+    <criterion id="AC8">Account Name Generation - If user doesn't provide custom name, generates default name with incremental numbers</criterion>
+    <criterion id="AC9">Currency Default - If currency not specified, uses user's profile currency preference</criterion>
+    <criterion id="AC10">Validation Rules - Enforces: initialBalance >= 0, accountType valid enum, currency supported, account name &lt;= 50 characters</criterion>
+    <criterion id="AC11">Duplicate Prevention - Allows duplicate account types but ensures unique account names per user</criterion>
+    <criterion id="AC12">Message History - Stores all messages with intent and entities in messages table for context</criterion>
+    <criterion id="AC13">Error Handling - If AI confidence &lt; 0.7 or entities incomplete, asks clarifying questions with account type buttons</criterion>
+    <criterion id="AC14">Fallback Regex - If RORK API fails, falls back to regex patterns for Arabic/English account creation commands</criterion>
+    <criterion id="AC15">Performance - Complete account creation flow in &lt; 5 seconds</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR2: Account Management</section>
+        <snippet>Create multiple accounts (bank, cash, credit card, digital wallet). Each account has: name, type, currency, initial balance. View all accounts with current balances. Set default account for quick transactions. Account balance automatically updates with transactions.</snippet>
+        <reason>Defines authoritative functional requirements for account management</reason>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Finance Tracker v2.0 - Solution Architecture</title>
+        <section>AI Integration Architecture - Intent Detection Pattern (No Tool Calling)</section>
+        <snippet>AI for understanding, manual code for execution. Step 1: AI detects intent with structured output. Step 2: OUR code routes and executes (reliable, debuggable). Step 3: AI generates natural response. Why No Tool Calling: LLMs unreliable at tool execution, hard to debug, loss of control over business logic.</snippet>
+        <reason>Defines core AI integration pattern - intent detection without tool calling</reason>
+      </doc>
+      <doc>
+        <path>docs/decisions/ADR-001-nl-parsing-strategy.md</path>
+        <title>Architecture Decision Record: NL Parsing Strategy</title>
+        <section>Decision: RORK AI Integration</section>
+        <snippet>Selected RORK Toolkit for natural language parsing over regex-only approach. Rationale: Consistent conversational UX from Epic 2 onwards, no rework needed in Epic 3, better Arabic support, aligns with PRD vision. Impact: +8h for AI integration overhead in Epic 2 but -12h savings in Epic 3.</snippet>
+        <reason>Documents preparation sprint decision to use RORK AI for all NL parsing</reason>
+      </doc>
+      <doc>
+        <path>docs/rork-integration-guide.md</path>
+        <title>RORK Integration Guide</title>
+        <section>Implementation Guide</section>
+        <snippet>RORK integration ready for Epic 2. Files created: convex/ai/types.ts (88 lines), convex/ai/nlParser.ts (255 lines), convex/ai/nlParser.test.ts (220 lines). AI Capabilities: Intent detection (5 account intents), entity extraction, bilingual support, fallback regex strategy. 41 tests passing.</snippet>
+        <reason>Provides implementation details for RORK integration completed in prep sprint</reason>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 2: Account Management</section>
+        <snippet>Goal: Enable multi-account financial tracking. Key Stories: 1. Create Account - Natural language account creation, 2. View Accounts, 3. Edit Account, 4. Default Account. Success Criteria: Account creation &lt; 30 seconds, support 10+ accounts, accurate balance calculations.</snippet>
+        <reason>Epic-level story definition and success criteria</reason>
+      </doc>
+      <doc>
+        <path>docs/retrospectives/epic-1-retro-2025-10-13.md</path>
+        <title>Epic 1 Retrospective</title>
+        <section>Preparation Sprint: RORK API Setup &amp; Integration</section>
+        <snippet>Completed 45 minutes (est. 3 hours). Files Created: convex/ai/types.ts, nlParser.ts, nlParser.test.ts. AI Capabilities: 5 account intents, entity extraction, bilingual prompts, fallback regex. 41 tests passing. Configuration: RORK_TOOLKIT_URL set in dev+prod, ready for Epic 2.</snippet>
+        <reason>Documents completed RORK integration from preparation sprint</reason>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>convex/ai/nlParser.ts</path>
+        <kind>action</kind>
+        <symbol>parseAccountIntent</symbol>
+        <lines>1-255</lines>
+        <reason>Core AI parser for account intent detection - already implemented in prep sprint (AC1, AC2, AC3, AC14)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/ai/types.ts</path>
+        <kind>types</kind>
+        <symbol>AccountIntent, CreateAccountEntities, IntentDetectionResult</symbol>
+        <lines>1-140</lines>
+        <reason>Type definitions for AI intent detection and entity extraction - ready for use (AC1, AC2)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/commands/registry.ts</path>
+        <kind>utility</kind>
+        <symbol>commandRegistry</symbol>
+        <lines>1-end</lines>
+        <reason>Command registry pattern from prep sprint refactoring - needs createAccountCommand registration (AC1, Task 9)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>accounts table</symbol>
+        <lines>107-125</lines>
+        <reason>Accounts table already defined in Story 1.2 with all required fields and indexes (AC5, AC10, AC11)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/constants.ts</path>
+        <kind>constants</kind>
+        <symbol>MESSAGES</symbol>
+        <lines>18-66</lines>
+        <reason>Pattern for bilingual messages - needs account-specific messages added (AC3, AC4, AC7, AC13)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/keyboards.ts</path>
+        <kind>utility</kind>
+        <symbol>keyboard helpers</symbol>
+        <lines>1-end</lines>
+        <reason>Keyboard helper functions from Story 1.3 - needs account type selection keyboards added (AC4, AC13, Task 12)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/telegram/webhook.ts</path>
+        <kind>http-action</kind>
+        <symbol>webhook handler</symbol>
+        <lines>1-end</lines>
+        <reason>Main webhook entry point - needs callback_query handler enhancement for confirmation buttons (AC4, AC5, AC6)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/users/getProfile.ts</path>
+        <kind>query</kind>
+        <symbol>getProfile</symbol>
+        <lines>1-end</lines>
+        <reason>Fetches user profile for currency default and language preference (AC9, AC3)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/telegram/sendMessage.ts</path>
+        <kind>action</kind>
+        <symbol>sendMessage</symbol>
+        <lines>1-end</lines>
+        <reason>Delivers confirmation and success messages to user (AC4, AC7)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/messages/create.ts</path>
+        <kind>mutation</kind>
+        <symbol>createMessage</symbol>
+        <lines>1-end</lines>
+        <reason>Logs all messages with intent/entities for context (AC12)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="convex" version="^1.16.5">Backend runtime and database</package>
+        <package name="ai" version="^3.4.0">Vercel AI SDK for RORK integration</package>
+        <package name="@ai-sdk/google" version="^0.0.52">Gemini fallback provider</package>
+        <package name="@ai-sdk/groq" version="^0.0.62">Groq fallback provider</package>
+        <package name="zod" version="^3.23.8">Schema validation for AI outputs</package>
+        <package name="zod-to-json-schema" version="latest">Zod to JSON Schema conversion for RORK</package>
+      </nodejs>
+      <devDependencies>
+        <package name="typescript" version="^5.9.3">Type safety</package>
+        <package name="vitest" version="^2.1.2">Testing framework</package>
+        <package name="@playwright/test" version="latest">E2E testing framework</package>
+        <package name="eslint" version="^9.12.0">Code linting</package>
+        <package name="prettier" version="^3.3.3">Code formatting</package>
+      </devDependencies>
+      <externalAPIs>
+        <api name="RORK Toolkit API" env="RORK_TOOLKIT_URL">Natural language parsing service configured in prep sprint</api>
+        <api name="Telegram Bot API" env="TELEGRAM_BOT_TOKEN">Message delivery and inline keyboards</api>
+      </externalAPIs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Intent-Based Routing: AI detects intent and extracts entities, but OUR code executes account creation logic (no tool calling per ADR-001)</constraint>
+    <constraint>Confirmation Before Action: Always confirm extracted entities before creating account (AI parsing 85%+ accuracy target)</constraint>
+    <constraint>Automatic Default for First Account: First account created automatically set as default without asking to reduce cognitive load</constraint>
+    <constraint>Fallback Regex Patterns: Implement regex-based parsing as fallback if RORK API fails (system resilience)</constraint>
+    <constraint>Pending Actions Pattern: Use database table (pendingActions) to store confirmation state with 5-minute expiration</constraint>
+    <constraint>Bilingual Parity: Arabic and English functionality must be equivalent - same accuracy, same features</constraint>
+    <constraint>Performance Target: Complete end-to-end flow in &lt; 5 seconds (AI parsing ~1-2s, user interaction ~2-5s, DB operations &lt; 500ms)</constraint>
+    <constraint>Layer Architecture: Commands in Layer 2 (Actions for AI), Mutations in Layer 3 (accounts.create), Queries in Layer 4 per solution-architecture.md</constraint>
+    <constraint>Testing Standard: Unit tests for command handler and mutations, integration tests for webhook flow, E2E tests with Playwright measuring timing</constraint>
+    <constraint>No Breaking Changes: Story 2.1 extends Epic 1 patterns without modifying existing code (additive only)</constraint>
+    <constraint>Message History: All account creation messages stored with intent/entities for future AI context features</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>parseAccountIntent</name>
+      <kind>action</kind>
+      <signature>parseAccountIntent(ctx, { userMessage: string, language: "ar" | "en" }): Promise&lt;IntentDetectionResult&gt;</signature>
+      <path>convex/ai/nlParser.ts</path>
+      <description>AI-powered intent detection for account operations. Returns intent, confidence, entities, and language. Falls back to regex on API failure. Already implemented in prep sprint.</description>
+    </interface>
+    <interface>
+      <name>createAccountCommand (NEW)</name>
+      <kind>command-handler</kind>
+      <signature>execute(ctx, { userId: Id&lt;"users"&gt;, message: string, language: "ar" | "en" }): Promise&lt;CommandResult&gt;</signature>
+      <path>convex/commands/createAccountCommand.ts</path>
+      <description>Command handler for account creation. Calls AI parser, validates entities, initiates confirmation workflow. Implements CommandHandler interface from registry pattern.</description>
+    </interface>
+    <interface>
+      <name>create (NEW)</name>
+      <kind>mutation</kind>
+      <signature>create(ctx, { userId: Id&lt;"users"&gt;, accountType: AccountType, accountName?: string, initialBalance?: number, currency?: Currency }): Promise&lt;Id&lt;"accounts"&gt;&gt;</signature>
+      <path>convex/accounts/create.ts</path>
+      <description>Creates account record with validation. Generates default name if not provided, checks for duplicates, fetches currency from profile, determines isDefault based on account count. Returns accountId.</description>
+    </interface>
+    <interface>
+      <name>list (NEW)</name>
+      <kind>query</kind>
+      <signature>list(ctx, { userId: Id&lt;"users"&gt;, includeDeleted?: boolean }): Promise&lt;Account[]&gt;</signature>
+      <path>convex/accounts/list.ts</path>
+      <description>Lists all accounts for user sorted by isDefault DESC, createdAt ASC. Used for account overview in success message (AC7).</description>
+    </interface>
+    <interface>
+      <name>count (NEW)</name>
+      <kind>query</kind>
+      <signature>count(ctx, { userId: Id&lt;"users"&gt; }): Promise&lt;number&gt;</signature>
+      <path>convex/accounts/count.ts</path>
+      <description>Counts user's accounts to determine default account logic (AC6).</description>
+    </interface>
+    <interface>
+      <name>sendAccountConfirmation (NEW)</name>
+      <kind>utility</kind>
+      <signature>sendAccountConfirmation(ctx, { userId: Id&lt;"users"&gt;, entities: CreateAccountEntities, language: "ar" | "en" }): Promise&lt;{ messageId: number }&gt;</signature>
+      <path>convex/lib/confirmationHandler.ts</path>
+      <description>Sends confirmation message with inline keyboard (confirm/cancel). Creates pending action in database with 5-minute expiration. Returns Telegram messageId for callback tracking (AC4).</description>
+    </interface>
+    <interface>
+      <name>createPending (NEW)</name>
+      <kind>mutation</kind>
+      <signature>createPending(ctx, { userId: Id&lt;"users"&gt;, actionType: string, actionData: any, messageId: number, expiresAt: number }): Promise&lt;Id&lt;"pendingActions"&gt;&gt;</signature>
+      <path>convex/actions/createPending.ts</path>
+      <description>Creates pending action record for confirmation workflow. Used to persist state between user message and callback button press (AC4, AC5).</description>
+    </interface>
+    <interface>
+      <name>getProfile</name>
+      <kind>query</kind>
+      <signature>getProfile(ctx, { userId: Id&lt;"users"&gt; }): Promise&lt;UserProfile | null&gt;</signature>
+      <path>convex/users/getProfile.ts</path>
+      <description>Fetches user profile for currency default (AC9) and language preference (AC3). Already exists from Epic 1.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Epic 1 multi-layered strategy enhanced for AI integration: Layer 1 (TypeScript strict mode, ESLint), Layer 2 (Vitest unit tests with mocked RORK API responses, 80%+ coverage), Layer 3 (Convex integration tests for account creation and confirmation workflow), Layer 4 (Playwright E2E tests for complete user journeys in Arabic and English), Layer 5 (Production monitoring with Sentry for RORK API failures). Story 2.1 requires extensive testing due to AI integration complexity, confirmation workflow state management, and bilingual natural language parsing.
+    </standards>
+    <locations>
+      - Unit tests: convex/commands/createAccountCommand.test.ts, convex/accounts/create.test.ts
+      - Integration tests: Execute via `npx convex test`
+      - E2E tests: tests/e2e/story-2.1-create-account.spec.ts
+      - Test fixtures: tests/e2e/fixtures/telegram-payloads.ts (account creation messages)
+      - Regression tests: tests/e2e/epic-1-regression.spec.ts (ensure Epic 1 still works)
+    </locations>
+    <ideas>
+      <test ac="AC1">Unit test: Mock RORK response with 0.92 confidence, verify intent === "create_account"</test>
+      <test ac="AC2">Unit test: Test entity extraction for 20+ example messages (Arabic/English) - verify accountType, balance, currency extraction accuracy</test>
+      <test ac="AC3">Unit test: Compare Arabic "أنشئ حساب بنك 1000 جنيه" vs English "Create bank account 1000 EGP" - verify equivalent parsing</test>
+      <test ac="AC4">Integration test: Call createAccountCommand → verify confirmation message sent with inline keyboard (confirm/cancel buttons)</test>
+      <test ac="AC5">Integration test: Simulate button press on confirm → verify account record created in database</test>
+      <test ac="AC6">Integration test: Create first account → verify isDefault = true automatically; Create second account → verify default prompt appears</test>
+      <test ac="AC7">Integration test: After account creation → verify success message includes account summary and overview of all accounts</test>
+      <test ac="AC8">Unit test: createAccountCommand with no name provided → verify default name generated ("Bank Account 1", "Bank Account 2" for duplicates)</test>
+      <test ac="AC9">Unit test: createAccountCommand with no currency → verify userProfile.currency used as default</test>
+      <test ac="AC10">Unit test: Test validation rules - negative balance (credit cards OK), invalid account type, name > 50 chars</test>
+      <test ac="AC11">Integration test: Create 2 accounts with same type but different names → verify both created; Same name → verify error or auto-increment</test>
+      <test ac="AC12">Integration test: Full flow → verify all messages (user request, confirmation, response) stored in messages table with intent/entities</test>
+      <test ac="AC13">Unit test: Mock RORK response with confidence 0.5 → verify clarification prompt sent with account type buttons</test>
+      <test ac="AC14">Integration test: Mock RORK API failure → verify regex fallback activated and parsing still works</test>
+      <test ac="AC15">E2E test: Send "أنشئ حساب بنك برصيد 1000 جنيه" → measure end-to-end timing → verify &lt; 5 seconds</test>
+      <test ac="Regression">E2E test: After Story 2.1 implementation → run epic-1-regression.spec.ts → verify /start and /help still work</test>
+    </ideas>
+  </tests>
+
+  <newTables>
+    <table name="pendingActions">
+      <description>Stores temporary state for confirmation workflows (5-minute expiration)</description>
+      <fields>
+        <field name="userId" type="Id&lt;users&gt;">Foreign key to users table</field>
+        <field name="actionType" type="string">Type of action pending (e.g., "create_account", "delete_account")</field>
+        <field name="actionData" type="any">JSON data for the pending action (entities from AI parsing)</field>
+        <field name="messageId" type="number">Telegram message ID for callback tracking</field>
+        <field name="expiresAt" type="number">Unix timestamp when action expires (current time + 5 minutes)</field>
+        <field name="createdAt" type="number">Unix timestamp of action creation</field>
+      </fields>
+      <indexes>
+        <index name="by_user" fields="[userId]">Fetch all pending actions for user</index>
+        <index name="by_message" fields="[messageId]">Fast lookup on callback button press</index>
+        <index name="by_expiration" fields="[expiresAt]">Scheduled job cleanup of expired actions</index>
+      </indexes>
+      <reason>Required for AC4 and AC5 - maintains confirmation state between user message and callback button press in stateless Convex environment</reason>
+    </table>
+  </newTables>
+
+  <scheduledJobs>
+    <job name="cleanExpiredPendingActions">
+      <path>convex/actions/cleanExpired.ts</path>
+      <schedule>Cron: 0 * * * * (every hour)</schedule>
+      <description>Deletes pending actions where expiresAt &lt; Date.now(). Prevents database bloat from abandoned confirmations.</description>
+      <reason>Part of pending actions pattern (Task 5) - maintains database health</reason>
+    </job>
+  </scheduledJobs>
+
+  <keyDesignPatterns>
+    <pattern name="Intent-Based Routing">
+      <description>AI detects user intent and extracts entities, but our deterministic code executes business logic</description>
+      <rationale>LLMs are unreliable at tool execution; this pattern gives us full control and debuggability while leveraging AI for natural language understanding</rationale>
+      <implementation>nlParser.parseAccountIntent() returns structured JSON → our code validates → accounts.create() mutation executes</implementation>
+      <reference>ADR-001, solution-architecture.md (AI Integration Architecture)</reference>
+    </pattern>
+    <pattern name="Confirmation Workflow with Pending Actions">
+      <description>Store action state in database table with expiration, use Telegram callback_data to link button press to pending action</description>
+      <rationale>Convex is stateless; we need persistent storage for multi-step workflows spanning user interactions</rationale>
+      <implementation>pendingActions table + callback_data format "confirm_account_{messageId}" + 5-minute TTL</implementation>
+      <reference>Task 5, AC4, AC5</reference>
+    </pattern>
+    <pattern name="Smart Defaults with Progressive Disclosure">
+      <description>First account automatically set as default; subsequent accounts prompt user</description>
+      <rationale>Reduces cognitive load for new users (90% want first account as default) while giving power users control</rationale>
+      <implementation>accounts.count() === 0 → isDefault: true; accounts.count() > 0 → show Yes/No buttons</implementation>
+      <reference>AC6, Dev Notes Key Design Decisions #3</reference>
+    </pattern>
+    <pattern name="Fallback Degradation">
+      <description>Primary: RORK API (85-90% accuracy) → Fallback: Regex patterns (70% accuracy) → Last resort: Clarification prompts</description>
+      <rationale>System resilience - users can still create accounts even if AI service is down</rationale>
+      <implementation>try { await rorkAPI } catch { regexParse() } finally { if (confidence &lt; 0.7) askClarification() }</implementation>
+      <reference>AC14, AC13, Dev Notes Key Design Decisions #4</reference>
+    </pattern>
+  </keyDesignPatterns>
+
+  <performanceTargets>
+    <target metric="End-to-End Timing" value="&lt; 5 seconds" ac="AC15">
+      <breakdown>
+        <step name="AI parsing (RORK API call)" estimated="1-2 seconds"/>
+        <step name="Confirmation display (Telegram API)" estimated="0.5 seconds"/>
+        <step name="User thinks and clicks" estimated="2-5 seconds (human time)"/>
+        <step name="Account creation mutation" estimated="0.3 seconds"/>
+        <step name="Success message delivery" estimated="0.5 seconds"/>
+      </breakdown>
+    </target>
+    <target metric="AI Parsing Confidence" value=">= 0.85 (85%)" ac="AC1">
+      <description>RORK should achieve 85%+ confidence on clear inputs; lower confidence triggers clarification flow</description>
+    </target>
+    <target metric="Database Operations" value="&lt; 500ms" ac="AC15">
+      <description>All Convex mutations and queries complete in under 500ms using indexes</description>
+    </target>
+    <target metric="Concurrent Users" value="100+ simultaneous" ac="Implicit">
+      <description>Serverless Convex architecture scales automatically; no performance degradation expected</description>
+    </target>
+  </performanceTargets>
+
+  <riskMitigation>
+    <risk name="RORK API Downtime" severity="Medium" likelihood="Low">
+      <impact>Users cannot create accounts if AI parsing fails</impact>
+      <mitigation>Fallback regex patterns provide 70% accuracy degraded mode (AC14)</mitigation>
+      <monitoring>Sentry alerts on repeated RORK API failures, log all fallback activations</monitoring>
+    </risk>
+    <risk name="Low AI Confidence on Valid Inputs" severity="Medium" likelihood="Medium">
+      <impact>Users get unnecessary clarification prompts, degrading UX</impact>
+      <mitigation>Extensive testing with 50+ Arabic/English examples to tune confidence threshold (AC13)</mitigation>
+      <monitoring>Log all low-confidence cases for prompt tuning in post-Epic 2 optimization</monitoring>
+    </risk>
+    <risk name="Pending Actions Table Bloat" severity="Low" likelihood="Medium">
+      <impact>Database storage grows from abandoned confirmations</impact>
+      <mitigation>Scheduled cleanup job runs hourly, 5-minute expiration prevents long-term accumulation</mitigation>
+      <monitoring>Database size monitoring, alert if pendingActions table > 10,000 records</monitoring>
+    </risk>
+    <risk name="Callback Button Expiration UX" severity="Low" likelihood="High">
+      <impact>Users click confirm button after 5 minutes, get "expired" error</impact>
+      <mitigation>Clear error message in user's language: "انتهت صلاحية التأكيد، أرسل طلبك مرة أخرى"</mitigation>
+      <monitoring>Track expiration rate; if > 20% of confirmations expire, increase TTL to 10 minutes</monitoring>
+    </risk>
+  </riskMitigation>
+
+  <successCriteria>
+    <criterion>All 15 acceptance criteria met and validated through testing</criterion>
+    <criterion>41+ unit tests passing (existing) + 20+ new tests for Story 2.1</criterion>
+    <criterion>8+ E2E tests passing including Arabic/English account creation flows</criterion>
+    <criterion>End-to-end timing measured via E2E tests: average &lt; 5 seconds (AC15)</criterion>
+    <criterion>AI parsing confidence >= 85% on 50+ test cases (AC1)</criterion>
+    <criterion>Zero regression: Epic 1 tests still passing after Story 2.1 implementation</criterion>
+    <criterion>Production deployment successful with zero critical errors in first 24 hours</criterion>
+    <criterion>Sentry logs show &lt; 5% RORK API failure rate</criterion>
+  </successCriteria>
+</story-context>

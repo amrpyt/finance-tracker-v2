@@ -1,0 +1,455 @@
+<story-context id="story-1.3-user-onboarding" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.3</storyId>
+    <title>User Onboarding &amp; Registration</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-12</generatedAt>
+    <generator>BMAD Story Context Workflow v6.0</generator>
+    <sourceStoryPath>d:\Vibe Coding\Finance-Tracker-v2.0\docs\stories\story-1.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a new user</asA>
+    <iWant>to start the bot with /start and complete onboarding by selecting my language preference</iWant>
+    <soThat>I can begin using the finance tracker in my preferred language within 2 minutes</soThat>
+    
+    <tasks>
+      <task id="1" ac="2,3,9">Create User Registration Mutation - users/register.ts with atomic user + userProfile creation</task>
+      <task id="2" ac="6">Create User Profile Update Mutation - users/updateProfile.ts for language selection</task>
+      <task id="3" ac="2,8">Create Get User by Telegram ID Query - users/getByTelegramId.ts for authentication</task>
+      <task id="4" ac="8">Create Get User Profile Query - users/getProfile.ts for language preference retrieval</task>
+      <task id="5" ac="4,5,7">Create Language Constants File - lib/constants.ts with bilingual message templates</task>
+      <task id="6" ac="1">Create Command Router Utility - lib/commandRouter.ts for /start and /help detection</task>
+      <task id="7" ac="1,2,3,4,5,8,10">Enhance Webhook with /start Handler - integrate command routing and registration flow</task>
+      <task id="8" ac="6,7">Implement Callback Query Handler - process inline keyboard button presses for language selection</task>
+      <task id="9" ac="5">Create Inline Keyboard Helper - lib/keyboards.ts for language selection UI</task>
+      <task id="10" ac="4,5,7">Update sendMessage Action - add reply_markup support for inline keyboards and answerCallbackQuery</task>
+      <task id="11" ac="10">Create Message Storage Mutation - messages/create.ts for conversation history logging</task>
+      <task id="12" ac="1-10">Testing &amp; Validation - comprehensive end-to-end testing of registration and language selection flows</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="critical">
+      <title>/start Command Recognition</title>
+      <description>Webhook detects /start command from incoming messages and routes to registration handler</description>
+      <verification>Send /start message, verify webhook logs show command detection and routing to handleStartCommand</verification>
+    </criterion>
+    
+    <criterion id="AC2" priority="critical">
+      <title>New User Detection</title>
+      <description>System queries users table by telegramId, identifies new users (returns null), and initiates registration flow</description>
+      <verification>New telegramId query returns null, triggers users/register mutation call</verification>
+    </criterion>
+    
+    <criterion id="AC3" priority="critical">
+      <title>User Registration</title>
+      <description>Creates user record with Telegram data (telegramId, username, firstName, lastName, createdAt) and userProfile with defaults (language: "ar", currency: "EGP", timezone: "Africa/Cairo", all notification preferences: true)</description>
+      <verification>Database inspection shows user record + userProfile record created with correct fields and default values</verification>
+    </criterion>
+    
+    <criterion id="AC4" priority="high">
+      <title>Welcome Message Delivery</title>
+      <description>Sends bilingual welcome message within 2 seconds containing greeting and language selection prompt</description>
+      <verification>User receives message with both Arabic and English text within 2 seconds of /start</verification>
+    </criterion>
+    
+    <criterion id="AC5" priority="high">
+      <title>Language Selection UI</title>
+      <description>Displays inline keyboard with two buttons: "العربية 🇸🇦" (callback_data: "lang_ar") and "English 🇬🇧" (callback_data: "lang_en")</description>
+      <verification>Telegram message includes inline_keyboard with 2 buttons with correct text and callback_data values</verification>
+    </criterion>
+    
+    <criterion id="AC6" priority="critical">
+      <title>Callback Query Handling</title>
+      <description>Webhook processes callback_query from inline button, extracts language choice, updates userProfile.language field</description>
+      <verification>Button click triggers callback_query, webhook detects it, updates userProfile.language in database</verification>
+    </criterion>
+    
+    <criterion id="AC7" priority="high">
+      <title>Confirmation Message</title>
+      <description>Sends language-specific confirmation and tutorial message in selected language within 1 second of language selection</description>
+      <verification>After language button click, user receives confirmation in selected language within 1 second</verification>
+    </criterion>
+    
+    <criterion id="AC8" priority="high">
+      <title>Returning User Handling</title>
+      <description>Existing users sending /start receive language-specific welcome-back message without re-registration</description>
+      <verification>Send /start from existing user, verify no new user record created, receives welcome-back message in their profile language</verification>
+    </criterion>
+    
+    <criterion id="AC9" priority="critical">
+      <title>Atomic Registration</title>
+      <description>User and userProfile creation is atomic transaction (both succeed or both fail), idempotent on retry</description>
+      <verification>Simulate concurrent /start commands, verify single user+profile pair created. Retry /start, verify no duplicates</verification>
+    </criterion>
+    
+    <criterion id="AC10" priority="medium">
+      <title>Message History</title>
+      <description>All /start commands and bot responses stored in messages table for debugging and context</description>
+      <verification>Database shows message records with role: "user" (for /start) and role: "assistant" (for responses)</verification>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" relevance="primary">
+        <title>Product Requirements Document</title>
+        <section name="FR1: User Onboarding &amp; Authentication">
+          <snippet>Telegram-based authentication using user's Telegram ID. Simple /start command initiates bot interaction. Welcome message with quick tutorial (&lt; 2 minutes). Language preference selection (Arabic/English). First-time user guidance for creating initial account.</snippet>
+        </section>
+      </doc>
+      
+      <doc path="docs/tech-spec-epic-1.md" relevance="primary">
+        <title>Technical Specification: Epic 1</title>
+        <section name="Workflow 1: First-Time User Onboarding">
+          <snippet>User sends /start → Telegram → Convex Webhook. Parse message, extract Telegram user info. Query: users/getByTelegramId(telegramId). User not found? → Mutation: users/register() with user + userProfile creation. Send message with language selection buttons using inline_keyboard: [["العربية 🇸🇦", "lang_ar"], ["English 🇬🇧", "lang_en"]]. User clicks language button → Callback query received. Mutation: users/updateProfile(userId, { language: "ar" }). Send onboarding tutorial in selected language. Timing: Total &lt; 2 seconds (target: 1.5 seconds)</snippet>
+        </section>
+        
+        <section name="AC4: User Registration">
+          <snippet>New user sends /start. User lookup by telegramId returns null (new user). users/register mutation creates user record (telegramId, username, firstName, lastName, createdAt). userProfile created with defaults: language: "ar", currency: "EGP", timezone: "Africa/Cairo", all notification preferences: true. User and profile creation is atomic (both succeed or both fail). Duplicate registration attempts return existing user (idempotent)</snippet>
+        </section>
+        
+        <section name="AC5: Language Selection">
+          <snippet>User sees bilingual welcome message. Inline keyboard displayed with language options. Callback query handler processes button click. users/updateProfile mutation updates language field. Confirmation message sent in selected language. Tutorial message follows with bot features overview</snippet>
+        </section>
+      </doc>
+      
+      <doc path="docs/solution-architecture.md" relevance="supporting">
+        <title>Solution Architecture</title>
+        <section name="Database Schema - users table">
+          <snippet>telegramId: string (unique identifier), username: optional string, firstName: optional string, lastName: optional string, createdAt: number (Unix timestamp). Index: by_telegram_id for fast authentication lookup (&lt; 100ms)</snippet>
+        </section>
+        
+        <section name="Database Schema - userProfiles table">
+          <snippet>userId: Id&lt;"users"&gt; (foreign key), language: "ar" | "en", defaultAccountId: optional Id&lt;"accounts"&gt;, notificationPreferences: object with 5 boolean flags, currency: string ("EGP"), timezone: string ("Africa/Cairo"), updatedAt: number. Index: by_user for single-query profile retrieval. Defaults: language "ar", all notifications true, currency "EGP", timezone "Africa/Cairo"</snippet>
+        </section>
+      </doc>
+      
+      <doc path="docs/epics.md" relevance="supporting">
+        <title>Epic Breakdown</title>
+        <section name="Epic 1: Foundation &amp; Telegram Bot Setup">
+          <snippet>Story 3: User Onboarding - /start command with language selection and profile creation. Success Criteria: Users complete onboarding in &lt; 2 minutes</snippet>
+        </section>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="convex/schema.ts" kind="schema" relevance="required">
+        <symbol name="users" type="table" lines="41-47">
+          <description>Users table definition with telegramId, username, firstName, lastName, createdAt. Index: by_telegram_id for authentication</description>
+          <reason>Story 1.3 creates user records in this table during registration</reason>
+        </symbol>
+        
+        <symbol name="userProfiles" type="table" lines="67-84">
+          <description>UserProfiles table with userId (foreign key), language ("ar"|"en"), defaultAccountId, notificationPreferences, currency, timezone, updatedAt. Index: by_user</description>
+          <reason>Story 1.3 creates userProfile records with default values and updates language field on selection</reason>
+        </symbol>
+        
+        <symbol name="messages" type="table" lines="152-166">
+          <description>Messages table storing conversation history. Fields: userId, role ("user"|"assistant"|"system"), content, isVoiceMessage, intent, entities, createdAt. Indexes: by_user, by_user_date</description>
+          <reason>Story 1.3 logs /start commands and bot responses in this table (AC10)</reason>
+        </symbol>
+      </artifact>
+      
+      <artifact path="convex/telegram/webhook.ts" kind="http-action" relevance="required">
+        <symbol name="webhook" type="httpAction" lines="109-223">
+          <description>Main webhook handler receiving POST requests from Telegram. Currently extracts user data and message content but does not process commands yet</description>
+          <reason>Story 1.3 extends this with /start command detection and routing to registration flow</reason>
+        </symbol>
+        
+        <symbol name="extractUserData" type="function" lines="35-51">
+          <description>Extracts user data from Telegram update: telegramId, username, firstName, lastName, languageCode</description>
+          <reason>Story 1.3 uses this to get Telegram user info for registration mutation</reason>
+        </symbol>
+        
+        <symbol name="extractMessage" type="function" lines="56-71">
+          <description>Extracts message content: messageId, text, hasVoice, voiceFileId, date, chatId</description>
+          <reason>Story 1.3 uses message.text to detect /start command</reason>
+        </symbol>
+      </artifact>
+      
+      <artifact path="convex/http.ts" kind="router" relevance="supporting">
+        <symbol name="http" type="httpRouter" lines="12-36">
+          <description>HTTP router mapping /telegram/webhook to webhook handler and /telegram/setWebhook to setWebhook handler</description>
+          <reason>Story 1.3 does not modify this, but relies on existing /telegram/webhook routing</reason>
+        </symbol>
+      </artifact>
+      
+      <artifact path="convex/telegram/types.ts" kind="types" relevance="supporting">
+        <description>TypeScript type definitions for Telegram API structures: TelegramUpdate, ExtractedUserData, ExtractedMessage, WebhookProcessingResult</description>
+        <reason>Story 1.3 reuses these types for type safety in new functions</reason>
+      </artifact>
+      
+      <artifact path="convex/telegram/validation.ts" kind="validation" relevance="supporting">
+        <description>Zod validation schemas for Telegram webhook payloads: validateWebhookPayload, hasValidMessage functions</description>
+        <reason>Story 1.3 leverages existing validation for payload safety</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="convex" version="^1.16.5" usage="core-backend">Database mutations, queries, HTTP actions, schema definitions</package>
+        <package name="zod" version="^3.23.8" usage="validation">Input validation for user registration and profile updates</package>
+        <package name="pino" version="^9.4.0" usage="logging">Structured JSON logging for webhook events and registration flow</package>
+        <package name="@sentry/node" version="^8.33.1" usage="error-tracking">Error monitoring for registration failures</package>
+        <package name="typescript" version="^5.9.3" usage="language">Type safety for all new functions</package>
+        <package name="vitest" version="^2.1.2" usage="testing">Unit and integration tests for registration mutations</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="arch-1" type="architecture">
+      <title>Serverless Monolith Pattern</title>
+      <description>All logic must be implemented as Convex functions (mutations, queries, actions). No external servers or polling mechanisms.</description>
+      <source>docs/solution-architecture.md#System Architecture</source>
+    </constraint>
+    
+    <constraint id="arch-2" type="layer-pattern">
+      <title>Layer 3 Mutations for Database Writes</title>
+      <description>User registration and profile updates must be implemented as Convex mutations in convex/users/ directory</description>
+      <source>docs/tech-spec-epic-1.md#Services and Modules</source>
+    </constraint>
+    
+    <constraint id="arch-3" type="layer-pattern">
+      <title>Layer 4 Queries for Database Reads</title>
+      <description>User lookup and profile retrieval must be implemented as Convex queries (read-only) in convex/users/ directory</description>
+      <source>docs/tech-spec-epic-1.md#Services and Modules</source>
+    </constraint>
+    
+    <constraint id="data-1" type="database">
+      <title>Atomic User + Profile Creation</title>
+      <description>User and userProfile must be created in single mutation to ensure both succeed or both fail (Convex OCC guarantees atomicity)</description>
+      <source>docs/tech-spec-epic-1.md#AC4: User Registration</source>
+    </constraint>
+    
+    <constraint id="data-2" type="database">
+      <title>Foreign Key Type Safety</title>
+      <description>Use Convex Id&lt;"users"&gt; type for userId references in userProfiles and messages tables</description>
+      <source>convex/schema.ts</source>
+    </constraint>
+    
+    <constraint id="data-3" type="database">
+      <title>Index Usage for Performance</title>
+      <description>Authentication lookup must use by_telegram_id index (O(log n)). Profile retrieval must use by_user index. Target: &lt; 100ms for auth lookup</description>
+      <source>docs/tech-spec-epic-1.md#Performance Requirements</source>
+    </constraint>
+    
+    <constraint id="perf-1" type="performance">
+      <title>Welcome Message Timing</title>
+      <description>Welcome message with language selection must be delivered within 2 seconds of /start command</description>
+      <source>docs/tech-spec-epic-1.md#AC6: Onboarding Flow Completion</source>
+    </constraint>
+    
+    <constraint id="perf-2" type="performance">
+      <title>Confirmation Message Timing</title>
+      <description>Language confirmation message must be sent within 1 second of language button click</description>
+      <source>docs/stories/story-1.3.md#AC7</source>
+    </constraint>
+    
+    <constraint id="ui-1" type="user-interface">
+      <title>Telegram Inline Keyboard Format</title>
+      <description>Language selection must use Telegram inline_keyboard with callback_data. Format: { inline_keyboard: [[{ text: "العربية 🇸🇦", callback_data: "lang_ar" }, { text: "English 🇬🇧", callback_data: "lang_en" }]] }</description>
+      <source>docs/tech-spec-epic-1.md#Workflow 1</source>
+    </constraint>
+    
+    <constraint id="ui-2" type="user-interface">
+      <title>Callback Query Acknowledgment</title>
+      <description>Must call answerCallbackQuery within 30 seconds of button press or Telegram shows error to user</description>
+      <source>Telegram Bot API documentation</source>
+    </constraint>
+    
+    <constraint id="error-1" type="error-handling">
+      <title>Webhook 200 OK Response</title>
+      <description>All webhook processing paths (success, validation failure, errors) must return HTTP 200 OK to prevent Telegram retry loops</description>
+      <source>convex/telegram/webhook.ts, docs/tech-spec-epic-1.md#AC8</source>
+    </constraint>
+    
+    <constraint id="lang-1" type="bilingual">
+      <title>Bilingual Message Templates</title>
+      <description>Welcome message must contain both Arabic and English text. Subsequent messages use user's selected language from profile</description>
+      <source>docs/stories/story-1.3.md#Dev Notes - Bilingual Message Templates</source>
+    </constraint>
+    
+    <constraint id="idempotency-1" type="data-integrity">
+      <title>Idempotent Registration</title>
+      <description>Sending /start multiple times must not create duplicate users. Check for existing telegramId before creating new user</description>
+      <source>docs/tech-spec-epic-1.md#AC4: User Registration</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="users.register" kind="mutation" path="convex/users/register.ts">
+      <signature>
+        async (ctx, { telegramId, username, firstName, lastName }) => { userId: Id&lt;"users"&gt;, success: boolean }
+      </signature>
+      <inputs>
+        <param name="telegramId" type="string" required="true">Telegram user ID (unique identifier)</param>
+        <param name="username" type="string" required="false">Telegram @username</param>
+        <param name="firstName" type="string" required="false">User's first name from Telegram</param>
+        <param name="lastName" type="string" required="false">User's last name from Telegram</param>
+      </inputs>
+      <outputs>
+        <field name="userId" type="Id&lt;users&gt;">ID of created/existing user</field>
+        <field name="success" type="boolean">True if registration completed</field>
+      </outputs>
+      <description>Creates user record and userProfile atomically. Returns existing user if telegramId already exists (idempotent)</description>
+    </interface>
+    
+    <interface name="users.updateProfile" kind="mutation" path="convex/users/updateProfile.ts">
+      <signature>
+        async (ctx, { userId, language }) => { updated: boolean }
+      </signature>
+      <inputs>
+        <param name="userId" type="Id&lt;users&gt;" required="true">User ID</param>
+        <param name="language" type="'ar' | 'en'" required="true">Language preference</param>
+      </inputs>
+      <outputs>
+        <field name="updated" type="boolean">True if profile updated successfully</field>
+      </outputs>
+      <description>Updates userProfile language field and updatedAt timestamp</description>
+    </interface>
+    
+    <interface name="users.getByTelegramId" kind="query" path="convex/users/getByTelegramId.ts">
+      <signature>
+        async (ctx, { telegramId }) => User | null
+      </signature>
+      <inputs>
+        <param name="telegramId" type="string" required="true">Telegram user ID</param>
+      </inputs>
+      <outputs>
+        <field name="return" type="User | null">User object or null if not found</field>
+      </outputs>
+      <description>Authenticates user by Telegram ID using by_telegram_id index. Returns null for new users</description>
+    </interface>
+    
+    <interface name="users.getProfile" kind="query" path="convex/users/getProfile.ts">
+      <signature>
+        async (ctx, { userId }) => UserProfile | null
+      </signature>
+      <inputs>
+        <param name="userId" type="Id&lt;users&gt;" required="true">User ID</param>
+      </inputs>
+      <outputs>
+        <field name="return" type="UserProfile | null">UserProfile object or null if not found</field>
+      </outputs>
+      <description>Fetches user profile by userId using by_user index. Used to get language preference for responses</description>
+    </interface>
+    
+    <interface name="messages.create" kind="mutation" path="convex/messages/create.ts">
+      <signature>
+        async (ctx, { userId, role, content, intent, entities }) => { messageId: Id&lt;"messages"&gt; }
+      </signature>
+      <inputs>
+        <param name="userId" type="Id&lt;users&gt;" required="true">User ID</param>
+        <param name="role" type="'user' | 'assistant' | 'system'" required="true">Message role</param>
+        <param name="content" type="string" required="true">Message text</param>
+        <param name="intent" type="string" required="false">AI-detected intent (Epic 3+)</param>
+        <param name="entities" type="any" required="false">Extracted entities (Epic 3+)</param>
+      </inputs>
+      <outputs>
+        <field name="messageId" type="Id&lt;messages&gt;">ID of created message</field>
+      </outputs>
+      <description>Stores conversation message in messages table for history and AI context</description>
+    </interface>
+    
+    <interface name="telegram.sendMessage" kind="action" path="convex/telegram/sendMessage.ts">
+      <signature>
+        async (ctx, { chatId, text, replyMarkup }) => { messageId: number, success: boolean }
+      </signature>
+      <inputs>
+        <param name="chatId" type="number" required="true">Telegram chat ID (same as user's telegramId)</param>
+        <param name="text" type="string" required="true">Message text to send</param>
+        <param name="replyMarkup" type="InlineKeyboard" required="false">Optional inline keyboard for buttons</param>
+      </inputs>
+      <outputs>
+        <field name="messageId" type="number">Telegram message ID</field>
+        <field name="success" type="boolean">True if sent successfully</field>
+      </outputs>
+      <description>Sends message to Telegram user via Bot API. Story 1.3 extends to support inline keyboards</description>
+    </interface>
+    
+    <interface name="telegram.answerCallbackQuery" kind="action" path="convex/telegram/sendMessage.ts">
+      <signature>
+        async (ctx, { callbackQueryId, text }) => { success: boolean }
+      </signature>
+      <inputs>
+        <param name="callbackQueryId" type="string" required="true">Callback query ID from button press</param>
+        <param name="text" type="string" required="false">Optional notification text</param>
+      </inputs>
+      <outputs>
+        <field name="success" type="boolean">True if acknowledged</field>
+      </outputs>
+      <description>Acknowledges inline keyboard button press. Must be called within 30 seconds of callback_query</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Epic 1 testing uses Vitest 2.1.2 framework with TypeScript support. Unit tests for mutations/queries in .test.ts files colocated with source. Integration tests use real Convex deployment and Telegram bot. Performance tests measure timing with Convex logs (webhook &lt; 500ms, registration &lt; 2s, confirmation &lt; 1s). No test coverage requirements for Epic 1 but Story 1.3 should establish testing patterns for future stories.
+    </standards>
+    
+    <locations>
+      - convex/users/__tests__/ (unit tests for register, updateProfile, getByTelegramId, getProfile)
+      - convex/messages/__tests__/ (unit test for create mutation)
+      - convex/lib/__tests__/ (unit tests for commandRouter, keyboards utilities)
+      - tests/integration/ (end-to-end /start flow with real Telegram bot)
+    </locations>
+    
+    <ideas>
+      <test ac="AC1" type="unit">
+        Test commandRouter.detectCommand("/start") returns "start" command. Test case-insensitive matching ("/START", "/Start"). Test non-command text returns null
+      </test>
+      
+      <test ac="AC2,AC3" type="unit">
+        Test users.register mutation with new telegramId creates user + userProfile records. Verify default values: language "ar", currency "EGP", timezone "Africa/Cairo", all notificationPreferences true. Verify createdAt and updatedAt timestamps set
+      </test>
+      
+      <test ac="AC9" type="unit">
+        Test users.register with existing telegramId returns existing userId without creating duplicates. Verify idempotent behavior
+      </test>
+      
+      <test ac="AC6" type="unit">
+        Test users.updateProfile mutation updates language field and updatedAt timestamp. Verify validation rejects invalid language values
+      </test>
+      
+      <test ac="AC2" type="unit">
+        Test users.getByTelegramId query returns user object for existing user. Returns null for non-existent telegramId. Verify by_telegram_id index used
+      </test>
+      
+      <test ac="AC8" type="unit">
+        Test users.getProfile query returns profile object for existing userId. Returns null for non-existent userId. Verify by_user index used
+      </test>
+      
+      <test ac="AC10" type="unit">
+        Test messages.create mutation inserts message with correct role, content, userId, createdAt. Verify messageId returned
+      </test>
+      
+      <test ac="AC5" type="unit">
+        Test getLanguageSelectionKeyboard() returns inline_keyboard with 2 buttons. Verify button text and callback_data values: "العربية 🇸🇦"/"lang_ar" and "English 🇬🇧"/"lang_en"
+      </test>
+      
+      <test ac="AC1,AC2,AC3,AC4,AC5" type="integration">
+        End-to-end new user flow: Send /start from new Telegram account. Verify webhook detects command. Verify users.register called. Verify database has user + userProfile. Verify bilingual welcome message received with inline keyboard. Measure total time &lt; 2 seconds
+      </test>
+      
+      <test ac="AC6,AC7" type="integration">
+        Language selection flow: Click "العربية" button. Verify webhook receives callback_query. Verify users.updateProfile called with language: "ar". Verify answerCallbackQuery called. Verify Arabic confirmation message received within 1 second
+      </test>
+      
+      <test ac="AC8" type="integration">
+        Returning user flow: Send /start from existing user. Verify no new user created in database. Verify welcome-back message received in user's profile language (Arabic or English)
+      </test>
+      
+      <test ac="AC10" type="integration">
+        Message logging: Send /start, complete language selection. Query messages table for userId. Verify records exist with role: "user" (for /start) and role: "assistant" (for responses). Verify content fields populated
+      </test>
+      
+      <test ac="AC4,AC7" type="performance">
+        Timing test: Measure time from webhook receiving /start to sendMessage call. Target &lt; 2 seconds for welcome. Measure time from callback_query to confirmation message. Target &lt; 1 second
+      </test>
+    </ideas>
+  </tests>
+</story-context>

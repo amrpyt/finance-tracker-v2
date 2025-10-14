@@ -1,0 +1,229 @@
+<story-context id="story-1.4-context" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.4</storyId>
+    <title>Help System &amp; Comprehensive Guidance</title>
+    <status>Completed</status>
+    <generatedAt>2025-10-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>d:/Vibe Coding/Finance-Tracker-v2.0/docs/stories/story-1.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a registered user</asA>
+    <iWant>to access comprehensive help guidance by sending `/help` at any time</iWant>
+    <soThat>I can understand available commands, learn how to use the bot, and get assistance when needed</soThat>
+    <tasks>
+      - Task 1: Extend Command Router for /help
+      - Task 2: Create Bilingual Help Content Generator
+      - Task 3: Update Webhook Handler for Help Command
+      - Task 4: Add Help Command Tests
+      - Task 5: Update Constants and Types
+      - Task 6: End-to-End Testing &amp; Performance Validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Help Command Recognition - Webhook detects `/help` command from incoming messages and routes to help handler via commandRouter</criterion>
+    <criterion id="AC2">User Authentication &amp; Language Retrieval - System queries user by telegramId, fetches userProfile to determine preferred language (ar/en)</criterion>
+    <criterion id="AC3">Bilingual Help Content - System generates help message in user's preferred language with all available commands and feature descriptions</criterion>
+    <criterion id="AC4">Arabic Help Message - Arabic help includes: available commands (/start, /help), upcoming features (accounts, expenses, budgets), support contact, formatted with emoji</criterion>
+    <criterion id="AC5">English Help Message - English help mirrors Arabic content with equivalent commands, features, and formatting</criterion>
+    <criterion id="AC6">Response Time - Help message delivered within 1 second from command receipt</criterion>
+    <criterion id="AC7">Help Message Formatting - Message uses emoji for visual hierarchy (📚 title, / commands, 🆕 upcoming, 💬 support) and clear section separation</criterion>
+    <criterion id="AC8">Message History Logging - /help command and bot response stored in messages table for debugging and context</criterion>
+    <criterion id="AC9">Returning User Support - Existing users can access /help multiple times without errors or duplicate responses</criterion>
+    <criterion id="AC10">Error Handling - If help generation fails, user receives graceful error message in their language</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>AC8: /help Command</section>
+        <snippet>Bot responds within 1 second, help message displayed in user's preferred language, Arabic help text includes all commands and features, English help text matches Arabic content, message formatted with emoji for clarity, command and response logged in messages table</snippet>
+        <reason>Defines authoritative acceptance criteria and performance requirements for help command</reason>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Technical Specification: Foundation &amp; Telegram Bot Setup</title>
+        <section>Workflow 2: Returning User - /help Command</section>
+        <snippet>User sends /help → Parse message → Query users/getByTelegramId → Query users/getProfile → Detect command via commandRouter.handleCommand → Generate help message based on user.language → Send message via telegram/sendMessage → Store command and response in messages/create</snippet>
+        <reason>Provides complete workflow sequence diagram for implementation</reason>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Finance Tracker v2.0 - Solution Architecture</title>
+        <section>Bilingual Support</section>
+        <snippet>Full Arabic and English support with language preference stored in userProfiles. Uses same language detection mechanism throughout application. All messages have ar/en versions.</snippet>
+        <reason>Defines bilingual architecture pattern to follow</reason>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR1: User Onboarding &amp; Authentication</section>
+        <snippet>Help command for guidance - /help available at any time</snippet>
+        <reason>Product requirement for help functionality</reason>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR15: AI Conversational Interface</section>
+        <snippet>Help command for guidance - Conversational tone (not robotic), emoji usage for visual clarity</snippet>
+        <reason>Defines UX requirements for help message formatting</reason>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 1: Foundation &amp; Telegram Bot Setup</section>
+        <snippet>Story 4: Help System - /help command with comprehensive guidance</snippet>
+        <reason>Epic-level story definition</reason>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>convex/lib/commandRouter.ts</path>
+        <kind>utility</kind>
+        <symbol>detectCommand</symbol>
+        <lines>27-47</lines>
+        <reason>Already detects /help command; needs handleHelpCommand function added</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/constants.ts</path>
+        <kind>constants</kind>
+        <symbol>MESSAGES</symbol>
+        <lines>18-66</lines>
+        <reason>Pattern for bilingual messages; help content should follow same structure</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/constants.ts</path>
+        <kind>constants</kind>
+        <symbol>COMMANDS</symbol>
+        <lines>85-88</lines>
+        <reason>Defines command constants including HELP</reason>
+      </artifact>
+      <artifact>
+        <path>convex/telegram/webhook.ts</path>
+        <kind>http-action</kind>
+        <symbol>webhook handler</symbol>
+        <lines>1-end</lines>
+        <reason>Entry point that routes /help command to commandRouter</reason>
+      </artifact>
+      <artifact>
+        <path>convex/users/getByTelegramId.ts</path>
+        <kind>query</kind>
+        <symbol>getByTelegramId</symbol>
+        <lines>1-end</lines>
+        <reason>Authenticates user for help command (AC2)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/users/getProfile.ts</path>
+        <kind>query</kind>
+        <symbol>getProfile</symbol>
+        <lines>1-end</lines>
+        <reason>Fetches language preference for bilingual help (AC2)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/telegram/sendMessage.ts</path>
+        <kind>action</kind>
+        <symbol>sendMessage</symbol>
+        <lines>1-end</lines>
+        <reason>Delivers help message to user (AC6)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/messages/create.ts</path>
+        <kind>mutation</kind>
+        <symbol>createMessage</symbol>
+        <lines>1-end</lines>
+        <reason>Logs /help command and bot response (AC8)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="convex" version="^1.16.5">Backend runtime and database</package>
+        <package name="zod" version="^3.23.8">Schema validation</package>
+        <package name="pino" version="^9.4.0">Structured logging</package>
+        <package name="@sentry/node" version="^8.33.1">Error tracking</package>
+      </nodejs>
+      <devDependencies>
+        <package name="typescript" version="^5.9.3">Type safety</package>
+        <package name="vitest" version="^2.1.2">Testing framework</package>
+        <package name="eslint" version="^9.12.0">Code linting</package>
+        <package name="prettier" version="^3.3.3">Code formatting</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Command Routing Pattern: Extend existing commandRouter.ts pattern from Story 1.3 (user onboarding)</constraint>
+    <constraint>Bilingual Support: Use same language detection mechanism as onboarding flow - fetch from userProfile.language</constraint>
+    <constraint>Stateless Design: No session state required; language fetched from userProfile on each request</constraint>
+    <constraint>Performance Target: Help content generation is pure function (no DB calls), ensuring &lt; 1 second response (AC6)</constraint>
+    <constraint>Layer Architecture: Help content follows Layer 6 (Utilities) pattern per solution-architecture.md</constraint>
+    <constraint>Testing Standard: Unit tests for helpContent generator, integration tests for webhook flow, E2E tests with timing measurement</constraint>
+    <constraint>Message Format: Follow emoji conventions from constants.ts (📚 title, / commands, 🆕 upcoming, 💬 support)</constraint>
+    <constraint>No Breaking Changes: Story 1.4 extends existing patterns without modifying core database schema or breaking previous stories</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>detectCommand</name>
+      <kind>function</kind>
+      <signature>detectCommand(text: string | undefined): CommandType</signature>
+      <path>convex/lib/commandRouter.ts</path>
+      <description>Already detects /help command; returns "help" when text is "/help"</description>
+    </interface>
+    <interface>
+      <name>getByTelegramId</name>
+      <kind>query</kind>
+      <signature>getByTelegramId(ctx, { telegramId: string }): Promise&lt;User | null&gt;</signature>
+      <path>convex/users/getByTelegramId.ts</path>
+      <description>User authentication - fetch user by Telegram ID for AC2</description>
+    </interface>
+    <interface>
+      <name>getProfile</name>
+      <kind>query</kind>
+      <signature>getProfile(ctx, { userId: Id&lt;"users"&gt; }): Promise&lt;UserProfile | null&gt;</signature>
+      <path>convex/users/getProfile.ts</path>
+      <description>Fetch user profile with language preference for bilingual help</description>
+    </interface>
+    <interface>
+      <name>sendMessage</name>
+      <kind>action</kind>
+      <signature>sendMessage(ctx, { chatId: number, text: string, parse_mode?: string }): Promise&lt;{ success: boolean }&gt;</signature>
+      <path>convex/telegram/sendMessage.ts</path>
+      <description>Send help message to Telegram - AC6 delivery mechanism</description>
+    </interface>
+    <interface>
+      <name>createMessage</name>
+      <kind>mutation</kind>
+      <signature>createMessage(ctx, { userId: Id&lt;"users"&gt;, role: "user" | "assistant", content: string }): Promise&lt;Id&lt;"messages"&gt;&gt;</signature>
+      <path>convex/messages/create.ts</path>
+      <description>Log /help command and bot response for AC8</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Epic 1 multi-layered strategy: Layer 1 (TypeScript strict mode, ESLint), Layer 2 (Vitest unit tests for pure functions with 80%+ coverage), Layer 3 (Convex integration tests for database operations), Layer 4 (E2E manual testing via real Telegram bot), Layer 5 (Production monitoring with Sentry). Help command requires unit tests for help content generator (both languages), integration tests for webhook → commandRouter flow, and E2E tests measuring response time (&lt; 1 second requirement).
+    </standards>
+    <locations>
+      - Unit tests: convex/lib/helpContent.test.ts (to be created)
+      - Integration tests: Execute via `npx convex test`
+      - E2E tests: Manual Telegram bot interaction
+      - Test fixtures: tests/fixtures/ (if needed)
+    </locations>
+    <ideas>
+      <test ac="AC1">Unit test: detectCommand("/help") returns "help"</test>
+      <test ac="AC3,AC4">Unit test: generateHelpMessage("ar") returns Arabic help with all sections</test>
+      <test ac="AC3,AC5">Unit test: generateHelpMessage("en") returns English help with all sections</test>
+      <test ac="AC1,AC2,AC6">Integration test: Simulate webhook with /help command, verify user auth, profile fetch, message delivery</test>
+      <test ac="AC6">E2E test: Send /help from Telegram, measure end-to-end response time (must be &lt; 1 second)</test>
+      <test ac="AC7">Unit test: Verify help message contains required emojis (📚, /, 🆕, 💬)</test>
+      <test ac="AC8">Integration test: Verify /help command and response stored in messages table</test>
+      <test ac="AC9">E2E test: Send /help multiple times, verify no errors or duplicate responses</test>
+      <test ac="AC10">Integration test: Simulate help generation failure, verify graceful error message in user language</test>
+    </ideas>
+  </tests>
+</story-context>

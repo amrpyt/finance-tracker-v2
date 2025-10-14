@@ -1,0 +1,302 @@
+<story-context id="story-1.2-database-schema" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Database Schema Definition &amp; Implementation</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>d:/Vibe Coding/Finance-Tracker-v2.0/docs/stories/story-1.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>backend developer</asA>
+    <iWant>to define the complete Convex database schema with all core tables and indexes</iWant>
+    <soThat>the system can store user data, profiles, accounts, and conversation history with proper relationships and data integrity</soThat>
+    <tasks>
+      <task id="1" summary="Create Schema File">
+        <subtask id="1.1">Create convex/schema.ts file with imports</subtask>
+        <subtask id="1.2">Import defineSchema, defineTable from convex/server</subtask>
+        <subtask id="1.3">Import validators (v) from convex/values</subtask>
+        <subtask id="1.4">Export default schema with all table definitions</subtask>
+      </task>
+      <task id="2" summary="Define Users Table">
+        <subtask id="2.1">Define users table with telegramId (string, unique identifier)</subtask>
+        <subtask id="2.2">Add optional username, firstName, lastName fields</subtask>
+        <subtask id="2.3">Add createdAt timestamp (number)</subtask>
+        <subtask id="2.4">Create by_telegram_id index on telegramId field</subtask>
+        <subtask id="2.5">Add inline comments explaining authentication lookup</subtask>
+      </task>
+      <task id="3" summary="Define UserProfiles Table">
+        <subtask id="3.1">Define userProfiles table with userId foreign key</subtask>
+        <subtask id="3.2">Add language field (union of ar | en literals)</subtask>
+        <subtask id="3.3">Add optional defaultAccountId reference to accounts</subtask>
+        <subtask id="3.4">Define notificationPreferences object with 5 boolean flags</subtask>
+        <subtask id="3.5">Add currency string (EGP) and timezone string (Africa/Cairo)</subtask>
+        <subtask id="3.6">Add updatedAt timestamp</subtask>
+        <subtask id="3.7">Create by_user index on userId field</subtask>
+        <subtask id="3.8">Document default values in comments</subtask>
+      </task>
+      <task id="4" summary="Define Accounts Table">
+        <subtask id="4.1">Define accounts table with userId foreign key</subtask>
+        <subtask id="4.2">Add name (string) and type (enum: bank, cash, credit_card, digital_wallet)</subtask>
+        <subtask id="4.3">Add balance (number) and currency (string) fields</subtask>
+        <subtask id="4.4">Add isDefault boolean flag (one per user)</subtask>
+        <subtask id="4.5">Add isDeleted boolean for soft deletes</subtask>
+        <subtask id="4.6">Add createdAt and updatedAt timestamps</subtask>
+        <subtask id="4.7">Create by_user index on userId</subtask>
+        <subtask id="4.8">Create by_user_active compound index on [userId, isDeleted]</subtask>
+        <subtask id="4.9">Create by_user_default compound index on [userId, isDefault]</subtask>
+        <subtask id="4.10">Document Epic 2 usage in comments</subtask>
+      </task>
+      <task id="5" summary="Define Messages Table">
+        <subtask id="5.1">Define messages table with userId foreign key</subtask>
+        <subtask id="5.2">Add role field (enum: user | assistant | system)</subtask>
+        <subtask id="5.3">Add content string (message text or voice transcription)</subtask>
+        <subtask id="5.4">Add optional isVoiceMessage boolean (Epic 3)</subtask>
+        <subtask id="5.5">Add optional intent string and entities (any type) for AI context</subtask>
+        <subtask id="5.6">Add createdAt timestamp</subtask>
+        <subtask id="5.7">Create by_user index on userId</subtask>
+        <subtask id="5.8">Create by_user_date compound index on [userId, createdAt]</subtask>
+        <subtask id="5.9">Document conversation history and debugging purpose</subtask>
+      </task>
+      <task id="6" summary="Validate Schema">
+        <subtask id="6.1">Start Convex dev server (npx convex dev)</subtask>
+        <subtask id="6.2">Verify schema compiles without TypeScript errors</subtask>
+        <subtask id="6.3">Check Convex dashboard for all 4 tables created</subtask>
+        <subtask id="6.4">Verify all 7 indexes appear in dashboard</subtask>
+        <subtask id="6.5">Test data type validation (attempt invalid insert, verify rejection)</subtask>
+        <subtask id="6.6">Verify foreign key references work correctly</subtask>
+      </task>
+      <task id="7" summary="Documentation">
+        <subtask id="7.1">Add file header comment with schema version and purpose</subtask>
+        <subtask id="7.2">Document each table's purpose above definition</subtask>
+        <subtask id="7.3">Add inline comments for complex fields (notificationPreferences)</subtask>
+        <subtask id="7.4">Document index usage patterns (e.g., Supports authentication lookup)</subtask>
+        <subtask id="7.5">Reference PRD sections (FR1, FR2) and architecture document</subtask>
+        <subtask id="7.6">Note future epic usage (e.g., Epic 3: AI intent detection)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <title>Users Table Created</title>
+      <description>users table defined with telegramId, username, firstName, lastName, createdAt fields and by_telegram_id index for fast authentication lookups</description>
+    </criterion>
+    <criterion id="AC2">
+      <title>User Profiles Table Created</title>
+      <description>userProfiles table defined with userId, language, defaultAccountId, notificationPreferences, currency, timezone, updatedAt and by_user index</description>
+    </criterion>
+    <criterion id="AC3">
+      <title>Accounts Table Created</title>
+      <description>accounts table defined with complete schema including userId, name, type, balance, currency, isDefault, isDeleted, timestamps, and three indexes: by_user, by_user_active, by_user_default</description>
+    </criterion>
+    <criterion id="AC4">
+      <title>Messages Table Created</title>
+      <description>messages table defined with userId, role, content, isVoiceMessage, intent, entities, createdAt and two indexes: by_user, by_user_date</description>
+    </criterion>
+    <criterion id="AC5">
+      <title>Foreign Key Relationships</title>
+      <description>All userId fields reference valid users table, defaultAccountId references accounts table</description>
+    </criterion>
+    <criterion id="AC6">
+      <title>Data Type Validation</title>
+      <description>Schema enforces correct data types (strings, numbers, booleans, enums) with Convex validators preventing invalid inserts</description>
+    </criterion>
+    <criterion id="AC7">
+      <title>Index Performance</title>
+      <description>All 7 indexes created and validated: users.by_telegram_id, userProfiles.by_user, accounts.by_user, accounts.by_user_active, accounts.by_user_default, messages.by_user, messages.by_user_date</description>
+    </criterion>
+    <criterion id="AC8">
+      <title>Schema Documentation</title>
+      <description>Inline comments in schema.ts explain purpose of each table, field, and index with references to PRD and architecture</description>
+    </criterion>
+    <criterion id="AC9">
+      <title>Soft Delete Support</title>
+      <description>Accounts and messages tables include isDeleted boolean flag to preserve audit trail</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR1: User Onboarding &amp; Authentication</section>
+        <snippet>Telegram-based authentication using user's Telegram ID, no passwords to manage. Simple /start command initiates bot interaction. Language preference selection (Arabic/English).</snippet>
+        <relevance>Defines requirements for users and userProfiles tables</relevance>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR2: Account Management</section>
+        <snippet>Create multiple accounts (bank, cash, credit card, digital wallet). Each account has: name, type, currency, initial balance. View all accounts with current balances. Archive/delete accounts (soft delete with transaction preservation). Set default account for quick transactions.</snippet>
+        <relevance>Defines requirements for accounts table structure</relevance>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Data Architecture - Database Schema</section>
+        <snippet>Convex uses document-based storage with runtime validation. Schema Principles: Soft Deletes (isDeleted flag preserves audit trail), Timestamps (all tables have createdAt, updated tables have updatedAt), User Isolation (all data scoped by userId with indexes), Comprehensive Indexes (every query path has supporting index)</snippet>
+        <relevance>Provides architecture patterns for schema design</relevance>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Technical Specification: Epic 1</title>
+        <section>Data Models and Contracts - Table Definitions</section>
+        <snippet>Complete schema definitions for 4 tables (users, userProfiles, accounts, messages) with field types, indexes, and relationships. Includes validation patterns using Zod and Convex validators.</snippet>
+        <relevance>Detailed technical specifications for each table</relevance>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Technical Specification: Epic 1</title>
+        <section>AC2: Database Schema Creation</section>
+        <snippet>Four tables created: users, userProfiles, accounts, messages. All indexes created and validated (7 total). Schema validation enforces data types. Foreign key relationships work. Soft delete flags prevent accidental data loss.</snippet>
+        <relevance>Acceptance criteria for this story</relevance>
+      </doc>
+    </docs>
+    
+    <code>
+      <artifact>
+        <path>convex/_generated/dataModel.d.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>DataModel</symbol>
+        <reason>Auto-generated type definitions from schema - will be regenerated after schema.ts is created</reason>
+      </artifact>
+      <artifact>
+        <path>convex/_generated/server.d.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>Server types</symbol>
+        <reason>Convex server types including mutation, query, action signatures</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="convex" version="^1.16.5" type="runtime">
+          Backend runtime, database, and function execution platform. Provides defineSchema, defineTable, validators.
+        </package>
+        <package name="zod" version="^3.23.8" type="runtime">
+          Schema validation library for runtime type checking and data validation.
+        </package>
+        <package name="typescript" version="^5.9.3" type="dev">
+          Type checking and compilation. Strict mode enabled for compile-time safety.
+        </package>
+        <package name="@types/node" version="^20.16.0" type="dev">
+          Node.js type definitions for TypeScript.
+        </package>
+        <package name="vitest" version="^2.1.2" type="dev">
+          Testing framework for unit and integration tests.
+        </package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>architecture</type>
+      <rule>Schema must be defined in convex/schema.ts using Convex defineSchema and defineTable functions</rule>
+      <source>Solution Architecture: Data Architecture section</source>
+    </constraint>
+    <constraint>
+      <type>architecture</type>
+      <rule>All tables must be scoped by userId for data isolation (except users table itself)</rule>
+      <source>Solution Architecture: Security &amp; Privacy</source>
+    </constraint>
+    <constraint>
+      <type>architecture</type>
+      <rule>Use soft deletes (isDeleted flag) for accounts to preserve transaction history</rule>
+      <source>Tech Spec Epic 1: Soft Delete Support</source>
+    </constraint>
+    <constraint>
+      <type>performance</type>
+      <rule>Every query path must have a supporting index - no table scans allowed</rule>
+      <source>Tech Spec Epic 1: Index Strategy</source>
+    </constraint>
+    <constraint>
+      <type>data-integrity</type>
+      <rule>Use Convex Id&lt;"tableName"&gt; type for foreign key references (type-safe)</rule>
+      <source>Solution Architecture: Foreign Keys pattern</source>
+    </constraint>
+    <constraint>
+      <type>data-integrity</type>
+      <rule>Use Unix timestamps (Date.now()) for all date fields for cross-timezone consistency</rule>
+      <source>Tech Spec Epic 1: Timestamps design decision</source>
+    </constraint>
+    <constraint>
+      <type>validation</type>
+      <rule>Use union types with literals for enums (e.g., v.union(v.literal("ar"), v.literal("en")))</rule>
+      <source>Tech Spec Epic 1: Enums pattern</source>
+    </constraint>
+    <constraint>
+      <type>testing</type>
+      <rule>Schema must compile without TypeScript errors in strict mode</rule>
+      <source>Tech Spec Epic 1: AC6 Validation</source>
+    </constraint>
+    <constraint>
+      <type>documentation</type>
+      <rule>Add inline comments explaining purpose of each table, field, and index</rule>
+      <source>Story 1.2: AC8 Schema Documentation</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>defineSchema</name>
+      <kind>function</kind>
+      <signature>defineSchema(tables: Record&lt;string, TableDefinition&gt;): SchemaDefinition</signature>
+      <path>convex/server</path>
+      <usage>Wrap all table definitions and export as default</usage>
+    </interface>
+    <interface>
+      <name>defineTable</name>
+      <kind>function</kind>
+      <signature>defineTable(fields: ObjectValidator).index(name: string, fields: string[]): TableDefinition</signature>
+      <path>convex/server</path>
+      <usage>Define each table structure with validators and chain .index() calls for indexes</usage>
+    </interface>
+    <interface>
+      <name>v (validators)</name>
+      <kind>namespace</kind>
+      <signature>v.string(), v.number(), v.boolean(), v.optional(), v.union(), v.literal(), v.object(), v.id(), v.any()</signature>
+      <path>convex/values</path>
+      <usage>Build field validators for type checking and runtime validation</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing for Story 1.2 focuses on schema validation and compile-time checks. Use Convex dev server to validate schema structure. TypeScript compiler in strict mode catches type errors. Manual verification via Convex dashboard for table and index creation. Integration tests will validate foreign key relationships and data integrity in subsequent stories (1.3, 1.4) when mutations are implemented.
+    </standards>
+    
+    <locations>
+      <location>convex/**/*.test.ts</location>
+      <location>tests/integration/</location>
+    </locations>
+    
+    <ideas>
+      <idea ac="AC1" priority="high">
+        Verify users table exists with correct fields and by_telegram_id index via Convex dashboard inspection
+      </idea>
+      <idea ac="AC2" priority="high">
+        Verify userProfiles table structure with language union type and notificationPreferences object
+      </idea>
+      <idea ac="AC3" priority="high">
+        Verify accounts table has all 3 indexes (by_user, by_user_active, by_user_default)
+      </idea>
+      <idea ac="AC4" priority="high">
+        Verify messages table indexes support conversation history queries
+      </idea>
+      <idea ac="AC6" priority="high">
+        Compile schema with TypeScript strict mode - no errors expected
+      </idea>
+      <idea ac="AC7" priority="medium">
+        Run npx convex dev and confirm all 7 indexes created in dashboard
+      </idea>
+      <idea ac="AC5" priority="medium">
+        Test foreign key type safety - attempt to insert invalid userId and verify TypeScript error
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
