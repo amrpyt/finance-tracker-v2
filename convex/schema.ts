@@ -117,6 +117,7 @@ export default defineSchema({
     currency: v.string(), // Account currency (e.g., "EGP", "USD")
     isDefault: v.boolean(), // One default account per user for quick transactions
     isDeleted: v.boolean(), // Soft delete flag - preserves transaction history
+    deletedAt: v.optional(v.number()), // Unix timestamp of account deletion (Story 2.5: AC16)
     createdAt: v.number(), // Unix timestamp of account creation
     updatedAt: v.number(), // Unix timestamp of last account update
   })
@@ -196,4 +197,86 @@ export default defineSchema({
     .index("by_user", ["userId"]) // Fetch all pending actions for user
     .index("by_message", ["messageId"]) // Fast lookup on callback button press
     .index("by_expiration", ["expiresAt"]), // Scheduled cleanup of expired actions
+
+  /**
+   * Conversation States Table
+   * 
+   * Stores multi-step conversation state for complex workflows.
+   * Used when user interactions require multiple messages (e.g., editing account name).
+   * States expire after 10 minutes to prevent stale conversations.
+   * 
+   * Usage: FR2 (Account Management - Multi-step edit flows)
+   * Epic: 2 (Story 2.3 - Edit Account with name/type input)
+   * 
+   * Indexes:
+   * - by_user: Fast lookup of active conversation state for user
+   * - by_expiration: Scheduled cleanup job to remove expired states
+   * 
+   * State Types:
+   * - awaiting_account_name: User is providing new account name
+   * - awaiting_account_selection: User is selecting which account to edit
+   * 
+   * Lifecycle:
+   * 1. Created when multi-step flow begins (e.g., "Edit Name" button clicked)
+   * 2. Retrieved on next user message to determine context
+   * 3. Cleared after flow completes or user cancels
+   * 4. Auto-expired after 10 minutes of inactivity
+   */
+  conversationStates: defineTable({
+    userId: v.id("users"), // Foreign key to users table
+    stateType: v.string(), // Type of conversation state (e.g., "awaiting_account_name")
+    stateData: v.any(), // JSON data for the state (accountId, editType, etc.)
+    expiresAt: v.number(), // Unix timestamp when state expires (10 minutes from creation)
+    createdAt: v.number(), // Unix timestamp of state creation
+  })
+    .index("by_user", ["userId"]) // Fast lookup of active state for user
+    .index("by_expiration", ["expiresAt"]), // Scheduled cleanup of expired states
+
+  /**
+   * Transactions Table
+   * 
+   * Stores financial transactions (expenses and income).
+   * Each transaction is linked to a user and an account.
+   * Supports soft deletes to preserve financial audit trail.
+   * 
+   * Usage: FR3 (Expense & Income Logging)
+   * Epic: 3 (Story 3.1 - AI Expense Logging, Story 3.2 - AI Income Logging)
+   * 
+   * Indexes:
+   * - by_user: Fetch all transactions for a user
+   * - by_user_date: Recent transactions + pagination with date filtering
+   * - by_account: Fetch all transactions for a specific account
+   * - by_user_category: Filter transactions by category for analytics
+   * - by_user_type: Separate expense vs income queries
+   * 
+   * Transaction Types:
+   * - expense: Money spent (decreases account balance)
+   * - income: Money received (increases account balance)
+   * 
+   * Categories (for expenses):
+   * - food, transport, entertainment, shopping, bills, health, other
+   * 
+   * Categories (for income):
+   * - salary, freelance, gift, refund, other
+   */
+  transactions: defineTable({
+    userId: v.id("users"), // Foreign key to users table
+    accountId: v.id("accounts"), // Foreign key to accounts table
+    type: v.union(
+      v.literal("expense"),
+      v.literal("income")
+    ),
+    amount: v.number(), // Transaction amount (always positive, type determines debit/credit)
+    category: v.string(), // Transaction category (food, transport, salary, etc.)
+    description: v.optional(v.string()), // User-provided description
+    date: v.number(), // Unix timestamp of transaction (user can set past dates)
+    isDeleted: v.boolean(), // Soft delete flag - preserves financial audit trail
+    deletedAt: v.optional(v.number()), // Unix timestamp of deletion
+    createdAt: v.number(), // Unix timestamp of transaction creation
+  })
+    .index("by_user", ["userId"]) // Fetch all user transactions
+    .index("by_user_date", ["userId", "date"]) // Recent transactions + date filtering
+    .index("by_account", ["accountId"]) // Fetch transactions for specific account
+    .index("by_user_category", ["userId", "category"]) // Category-based analytics
+    .index("by_user_type", ["userId", "type"]), // Filter by expense/income
 });

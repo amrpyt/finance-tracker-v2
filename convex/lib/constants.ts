@@ -65,6 +65,8 @@ Available Commands:
   },
 
   // Help messages for /help command (Story 1.4 - AC4, AC5)
+  // Updated: Story 2.4 - AC20 (Set default account documentation)
+  // Updated: Story 3.1 - AC1 (Expense logging documentation)
   HELP: {
     ar: `📚 *مساعدة بوت تتبع المصروفات*
 
@@ -74,9 +76,59 @@ Available Commands:
 /start - إعادة البدء والتسجيل
 /help - عرض هذه المساعدة
 
+✅ *إدارة الحسابات:*
+• "أنشئ حساب محفظة برصيد 500 جنيه" - إنشاء حساب جديد
+• "أرني حساباتي" - عرض جميع الحسابات مع الأرصدة
+• "عدل حساب المحفظة" - تعديل اسم أو نوع الحساب
+• "اجعل الحساب الافتراضي" - تعيين حساب افتراضي ⭐
+• "غير الحساب الافتراضي" - تغيير الحساب الافتراضي
+• "احذف حساب المحفظة" - حذف حساب (مع الاحتفاظ بسجل المعاملات)
+
+💰 *تسجيل المصروفات (جديد):*
+سجل مصروفاتك بلغة طبيعية - الذكاء الاصطناعي يفهمك!
+
+*أمثلة:*
+• "دفعت 50 جنيه على القهوة" 🍔
+• "صرفت 100 على المواصلات" 🚗
+• "اشتريت ملابس ب 200 جنيه" 🛍️
+• "أمس دفعت 75 على الغداء"
+• "الأسبوع اللي فات صرفت 500 على تسوق"
+
+*المرونة في التعبير:*
+استخدم أي أسلوب تفضله - "دفعت"، "صرفت"، "اشتريت"، "دفعت فلوس" - كلها تعمل! 🎯
+
+*سير العمل:*
+1️⃣ اكتب المصروف بلغة طبيعية
+2️⃣ الذكاء الاصطناعي يستخرج المبلغ والفئة والوصف
+3️⃣ تراجع التفاصيل وتؤكد أو تلغي
+4️⃣ يُحدَّث رصيد حسابك فوراً
+
+💡 *الحساب الافتراضي:*
+الحساب الافتراضي يُستخدم تلقائياً عند تسجيل المعاملات دون تحديد حساب. يظهر بعلامة ⭐ في جميع القوائم.
+
+💡 *حذف الحسابات:*
+عند حذف حساب، يتم إخفاؤه من القائمة مع الاحتفاظ بجميع معاملاته للرجوع إليها. لا يمكن حذف آخر حساب أو الحساب الافتراضي.
+
+❓ *كيف أسجل مصروف؟*
+ببساطة اكتب مثل: "دفعت 30 جنيه على تاكسي" - والذكاء الاصطناعي يتولى الباقي! 🚀
+
+💰 *تسجيل الدخل (جديد):*
+سجل دخلك بلغة طبيعية - الذكاء الاصطناعي يفهمك!
+
+*أمثلة:*
+• "استلمت راتب 5000 جنيه" 💼
+• "حصلت على 200 من عمل حر" 💻
+• "جاني 1000 من مشروع" 🏢
+• "أمس استلمت 300 هدية" 🎁
+• "قبضت أرباح 500 من استثمار" 📈
+
+*المرونة في التعبير:*
+استخدم أي أسلوب تفضله - "استلمت"، "قبضت"، "حصلت على"، "جاني" - كلها تعمل! 🎯
+
+❓ *كيف أسجل دخل؟*
+ببساطة اكتب مثل: "استلمت راتب 5000 جنيه" - والذكاء الاصطناعي يتولى الباقي! 🚀
+
 🆕 *الميزات القادمة:*
-• تسجيل المصروفات والدخل بالذكاء الاصطناعي
-• إنشاء حسابات متعددة (بنك، محفظة، بطاقة ائتمان)
 • تتبع الميزانيات الشهرية
 • أهداف الادخار والتخطيط المالي
 • تتبع القروض الشخصية
@@ -86,7 +138,7 @@ Available Commands:
 إذا كان لديك أي استفسارات أو مشاكل، يمكنك التواصل معنا.
 
 🎯 *نصيحة:*
-ابدأ الآن بإرسال /start لإعداد حسابك!`,
+ابدأ بإنشاء حسابك الأول! سيصبح افتراضياً تلقائياً، ثم جرب تسجيل أول مصروف.`,
 
     en: `📚 *Finance Tracker Bot Help*
 
@@ -96,9 +148,59 @@ Welcome! I'm the Finance Tracker bot, your personal assistant for managing your 
 /start - Restart and register
 /help - Show this help
 
+✅ *Account Management:*
+• "Create cash account with 500 EGP" - Create new account
+• "Show my accounts" - View all accounts with balances
+• "Edit wallet account" - Edit account name or type
+• "Set default account" - Set a default account ⭐
+• "Change default account" - Change the default account
+• "Delete wallet account" - Delete account (preserves transaction history)
+
+💰 *Expense Logging (NEW):*
+Log your expenses in natural language - AI understands you!
+
+*Examples:*
+• "spent 20 on coffee" 🍔
+• "paid 50 for lunch" 🚗
+• "bought clothes for 200" 🛍️
+• "yesterday paid 75 for dinner"
+• "last week spent 500 on shopping"
+
+*Flexible Expression:*
+Use any phrasing you prefer - "spent", "paid", "bought", "paid for" - they all work! 🎯
+
+*Confirmation Workflow:*
+1️⃣ Write your expense in natural language
+2️⃣ AI extracts amount, category, and description
+3️⃣ Review details and confirm or cancel
+4️⃣ Your account balance updates instantly
+
+💡 *Default Account:*
+The default account is automatically used when logging transactions without specifying an account. It's marked with ⭐ in all lists.
+
+💡 *Deleting Accounts:*
+When you delete an account, it's hidden from the list while preserving all its transactions for reference. You cannot delete your last account or the default account.
+
+❓ *How do I log an expense?*
+Simply write something like: "spent 30 on taxi" - and AI handles the rest! 🚀
+
+💰 *Income Logging (NEW):*
+Log your income in natural language - AI understands you!
+
+*Examples:*
+• "received 500 freelance payment" 💻
+• "got paid 1000 salary" 💼
+• "earned 200 from business" 🏢
+• "yesterday received 300 gift" 🎁
+• "got dividend 150 from investment" 📈
+
+*Flexible Expression:*
+Use any phrasing you prefer - "received", "got paid", "earned", "got money" - they all work! 🎯
+
+❓ *How do I log income?*
+Simply write something like: "received 500 freelance payment" - and AI handles the rest! 🚀
+
 🆕 *Coming Soon:*
-• AI-powered expense and income logging
-• Multiple accounts (bank, wallet, credit card)
 • Monthly budget tracking
 • Savings goals and financial planning
 • Personal loan tracking
@@ -108,7 +210,7 @@ Welcome! I'm the Finance Tracker bot, your personal assistant for managing your 
 If you have any questions or issues, feel free to contact us.
 
 🎯 *Tip:*
-Start now by sending /start to set up your account!`,
+Start by creating your first account! It will automatically become your default, then try logging your first expense.`,
   },
 };
 
@@ -135,7 +237,7 @@ export const COMMANDS = {
 };
 
 /**
- * Callback query data patterns
+ * Callback query data patterns (Story 3.1, 3.2)
  */
 export const CALLBACK_PATTERNS = {
   LANGUAGE_PREFIX: "lang_",
@@ -144,7 +246,21 @@ export const CALLBACK_PATTERNS = {
   ACCOUNT_TYPE_PREFIX: "create_account_type_",
   SET_DEFAULT_YES: "set_default_yes_",
   SET_DEFAULT_NO: "set_default_no_",
-};
+  // Story 3.1: Expense logging callbacks (Task 10-12)
+  CONFIRM_EXPENSE_PREFIX: "confirm_expense_",
+  EDIT_EXPENSE_PREFIX: "edit_expense_",
+  CANCEL_EXPENSE_PREFIX: "cancel_expense_",
+  SELECT_ACCOUNT_EXPENSE_PREFIX: "select_account_expense_",
+  EDIT_EXPENSE_AMOUNT_PREFIX: "edit_expense_amount_",
+  EDIT_EXPENSE_CATEGORY_PREFIX: "edit_expense_category_",
+  EDIT_EXPENSE_DESCRIPTION_PREFIX: "edit_expense_description_",
+  EDIT_EXPENSE_ACCOUNT_PREFIX: "edit_expense_account_",
+  BACK_TO_CONFIRMATION_PREFIX: "back_to_confirmation_",
+  // Story 3.2: Income logging callbacks (Task 19)
+  CONFIRM_INCOME: "confirm_income_",
+  CANCEL_INCOME: "cancel_income_",
+  SELECT_ACCOUNT_INCOME: "select_account_income_",
+} as const;
 
 /**
  * Account Types with Labels and Emojis (Story 2.1 - AC2, AC7)
@@ -280,7 +396,7 @@ export const ACCOUNT_MESSAGES = {
 };
 
 /**
- * Inline Keyboard Button Labels (Story 2.1)
+ * Inline Keyboard Button Labels (Story 2.1, 2.2)
  */
 export const BUTTON_LABELS = {
   CONFIRM: {
@@ -299,4 +415,29 @@ export const BUTTON_LABELS = {
     ar: "لا",
     en: "No",
   },
+  ADD_ACCOUNT: {
+    ar: "➕ إضافة حساب",
+    en: "➕ Add Account",
+  },
+  EDIT_ACCOUNT: {
+    ar: "✏️ تعديل",
+    en: "✏️ Edit",
+  },
+  REFRESH_ACCOUNTS: {
+    ar: "🔄 تحديث",
+    en: "🔄 Refresh",
+  },
 };
+
+/**
+ * Income Category Emoji Mapping (Story 3.2 Task 19.5)
+ * Task 20: Add emoji for each category (💼, 💻, 🏢, 📈, 🎁, 💰)
+ */
+export const INCOME_CATEGORY_EMOJI = {
+  salary: "💼",      // Briefcase for salary/work
+  freelance: "💻",   // Laptop for freelance work
+  business: "🏢",    // Office building for business
+  investment: "📈",  // Chart increasing for investment
+  gift: "🎁",        // Gift box for gifts
+  other: "💰",       // Money bag for other income
+} as const;

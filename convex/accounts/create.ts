@@ -26,7 +26,7 @@ import { api } from "../_generated/api";
  * @param currency - Account currency (optional, uses user profile default)
  * @returns Account ID
  */
-export const create = mutation({
+export const create: any = mutation({
   args: {
     userId: v.id("users"),
     accountType: v.union(
@@ -39,7 +39,7 @@ export const create = mutation({
     initialBalance: v.optional(v.number()),
     currency: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any> => {
     const { userId, accountType, accountName, initialBalance, currency } = args;
 
     // Validate account type (AC10)
@@ -56,7 +56,7 @@ export const create = mutation({
     }
 
     // Get user profile for currency default (AC9)
-    const profile = await ctx.runQuery(api.users.getProfile.getProfile, {
+    const profile: any = await ctx.runQuery(api.users.getProfile.getProfile, {
       userId,
     });
 
@@ -65,7 +65,7 @@ export const create = mutation({
     }
 
     // Use profile currency if not specified (AC9)
-    const accountCurrency = currency || profile.currency;
+    const accountCurrency: string = currency || profile.currency;
 
     // Validate currency is supported (AC10)
     const supportedCurrencies = ["EGP", "USD", "SAR", "EUR"];
@@ -136,7 +136,7 @@ export const create = mutation({
 
     // Create account (AC5)
     const now = Date.now();
-    const accountId = await ctx.db.insert("accounts", {
+    const accountId: any = await ctx.db.insert("accounts", {
       userId,
       name: finalAccountName,
       type: accountType,

@@ -85,11 +85,18 @@ export class CreateAccountCommandHandler implements CommandHandler {
       content: messageText,
     });
 
+    // Fetch recent conversation history for AI context (5-10 messages)
+    const conversationHistory = await ctx.runQuery(api.messages.getRecent.getRecent, {
+      userId,
+      limit: 10, // Last 10 messages for context retention
+    });
+
     try {
-      // Call AI parser to detect intent and extract entities (AC1, AC2, AC3)
+      // Call AI parser to detect intent and extract entities with context (AC1, AC2, AC3)
       const parseResult = await ctx.runAction(api.ai.nlParser.parseAccountIntent, {
         userMessage: messageText,
         language,
+        conversationHistory, // Pass history for context-aware intent detection
       });
 
       logger.info(

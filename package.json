@@ -13,8 +13,12 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "test:all": "npm run test && npm run test:e2e",
+    "test:prompts": "vitest run tests/integration/ai-prompts.test.ts",
+    "test:callbacks": "vitest run tests/integration/callback-handlers.test.ts",
+    "test:validation": "npm run test:prompts && npm run test:callbacks",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write \"**/*.{ts,json,md}\""
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "prepare": "husky || true"
   },
   "keywords": [
     "finance",
@@ -31,19 +35,23 @@
     "@ai-sdk/google": "^2.0.20",
     "@ai-sdk/groq": "^2.0.24",
     "@sentry/node": "^8.33.1",
+    "@types/uuid": "^10.0.0",
     "ai": "^5.0.68",
     "convex": "^1.16.5",
     "date-fns": "^4.1.0",
     "pino": "^9.4.0",
+    "uuid": "^13.0.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@playwright/test": "^1.56.0",
     "@types/node": "^20.16.0",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
     "eslint": "^9.12.0",
+    "husky": "^9.0.0",
     "playwright": "^1.56.0",
     "prettier": "^3.3.3",
     "typescript": "^5.9.3",

@@ -22,6 +22,7 @@ import { validateWebhookPayload, hasValidMessage } from "./validation";
 import { detectCommand } from "../lib/commandRouter";
 import { MESSAGES, CALLBACK_PATTERNS } from "../lib/constants";
 import { getCommandHandler } from "../commands/registry";
+import { routeCallback } from "../lib/callbackRegistry";
 
 // Initialize structured logger
 const logger = pino({
@@ -141,6 +142,9 @@ async function handleCommand(
 /**
  * Handle callback query (inline button press)
  * 
+ * REFACTORED: TD-001 Phase 2 - Now uses callback registry for routing
+ * All callback handlers are organized in convex/lib/callbackHandlers/
+ * 
  * AC6: Callback Query Handling
  * AC7: Confirmation Message
  * AC10: Message History
@@ -168,249 +172,16 @@ async function handleCallbackQuery(
   });
   const language: "ar" | "en" = profile?.language || "ar";
 
-  // Handle language selection (Story 1.3)
-  if (data && data.startsWith(CALLBACK_PATTERNS.LANGUAGE_PREFIX)) {
-    const selectedLanguage = data.replace(CALLBACK_PATTERNS.LANGUAGE_PREFIX, "") as "ar" | "en";
-
-    // Update language preference
-    await ctx.runMutation(api.users.updateProfile.updateProfile, {
-      userId: user._id,
-      language: selectedLanguage,
-    });
-
-    // Acknowledge button press (must be within 30 seconds)
-    await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-      callbackQueryId,
-    });
-
-    // Send confirmation message in selected language
-    const confirmationMessage = MESSAGES.LANGUAGE_SELECTED[selectedLanguage];
-    await ctx.runAction(api.telegram.sendMessage.sendMessage, {
-      chatId,
-      text: confirmationMessage,
-    });
-
-    // Store confirmation in message history
-    await ctx.runMutation(api.messages.create.create, {
-      userId: user._id,
-      role: "assistant",
-      content: confirmationMessage,
-    });
-
-    logger.info(
-      { telegramId: from.id, userId: user._id, language: selectedLanguage },
-      "Language preference updated and confirmation sent"
-    );
-    return;
-  }
-
-  // Handle account creation confirmation (Story 2.1 - AC4, AC5)
-  if (data && data.startsWith(CALLBACK_PATTERNS.CONFIRM_ACCOUNT_PREFIX)) {
-    const pendingIdStr = data.replace(CALLBACK_PATTERNS.CONFIRM_ACCOUNT_PREFIX, "");
-    
-    // Query pending action by ID
-    const pending = await ctx.runQuery(api.pendingActions.getById.getById, {
-      pendingId: pendingIdStr as any,
-    });
-
-    if (!pending) {
-      // Action expired or not found
-      const errorMsg = language === "ar"
-        ? "⏰ انتهت صلاحية التأكيد. أرسل طلبك مرة أخرى."
-        : "⏰ Confirmation expired. Please send your request again.";
-
-      await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-        callbackQueryId,
-        text: errorMsg,
-        showAlert: true,
-      });
-
-      logger.warn({ pendingIdStr, userId: user._id }, "Pending action not found or expired");
-      return;
-    }
-
-    // Extract action data
-    const actionData = pending.actionData;
-    const { accountType, accountName, initialBalance, currency } = actionData;
-
-    try {
-      // Create account (AC5)
-      const accountId = await ctx.runMutation(api.accounts.create.create, {
-        userId: user._id,
-        accountType,
-        accountName,
-        initialBalance,
-        currency,
-      });
-
-      // Get created account
-      const account = await ctx.runQuery(api.accounts.getById.getById, {
-        accountId,
-      });
-
-      if (!account) {
-        throw new Error("Account creation failed");
-      }
-
-      // Check if user has multiple accounts for default prompt (AC6)
-      const accountCount = await ctx.runQuery(api.accounts.count.count, {
-        userId: user._id,
-      });
-
-      // Delete pending action
-      await ctx.runMutation(api.pendingActions.deletePending.deletePending, {
-        pendingId: pending._id,
-      });
-
-      // Acknowledge button press
-      await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-        callbackQueryId,
-        text: language === "ar" ? "✅ تم الإنشاء" : "✅ Created",
-      });
-
-      // Send success message with accounts overview (AC7)
-      const { sendAccountSuccessMessage } = await import("../lib/responseHelpers");
-      await sendAccountSuccessMessage(ctx, {
-        account,
-        userId: user._id,
-        language,
-        chatId,
-      });
-
-      // If this is not the first account, ask about setting as default (AC6)
-      if (accountCount > 1 && !account.isDefault) {
-        const { getDefaultAccountPromptKeyboard } = await import("../lib/keyboards");
-        const { ACCOUNT_MESSAGES } = await import("../lib/constants");
-        
-        const defaultPrompt = ACCOUNT_MESSAGES.SET_AS_DEFAULT[language];
-        await ctx.runAction(api.telegram.sendMessage.sendMessage, {
-          chatId,
-          text: defaultPrompt,
-          replyMarkup: getDefaultAccountPromptKeyboard(accountId, language),
-        });
-      }
-
-      logger.info(
-        { userId: user._id, accountId, accountType },
-        "Account created successfully via confirmation"
-      );
-
-    } catch (error) {
-      logger.error(
-        {
-          error: error instanceof Error ? error.message : String(error),
-          userId: user._id,
-          actionData,
-        },
-        "Error creating account from confirmation"
-      );
-
-      await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-        callbackQueryId,
-        text: language === "ar" ? "❌ حدث خطأ" : "❌ Error occurred",
-        showAlert: true,
-      });
-    }
-    return;
-  }
-
-  // Handle account creation cancellation (Story 2.1 - AC4)
-  if (data && data.startsWith(CALLBACK_PATTERNS.CANCEL_ACCOUNT_PREFIX)) {
-    const pendingIdStr = data.replace(CALLBACK_PATTERNS.CANCEL_ACCOUNT_PREFIX, "");
-    
-    // Delete pending action if exists
-    const pending = await ctx.runQuery(api.pendingActions.getById.getById, {
-      pendingId: pendingIdStr as any,
-    });
-
-    if (pending) {
-      await ctx.runMutation(api.pendingActions.deletePending.deletePending, {
-        pendingId: pending._id,
-      });
-    }
-
-    // Acknowledge button press
-    await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-      callbackQueryId,
-      text: language === "ar" ? "❌ تم الإلغاء" : "❌ Cancelled",
-    });
-
-    // Send cancellation message
-    const cancelMsg = language === "ar"
-      ? "تم إلغاء إنشاء الحساب."
-      : "Account creation cancelled.";
-
-    await ctx.runAction(api.telegram.sendMessage.sendMessage, {
-      chatId,
-      text: cancelMsg,
-    });
-
-    logger.info({ userId: user._id }, "Account creation cancelled by user");
-    return;
-  }
-
-  // Handle set default account (Story 2.1 - AC6)
-  if (data && (data.startsWith(CALLBACK_PATTERNS.SET_DEFAULT_YES) || data.startsWith(CALLBACK_PATTERNS.SET_DEFAULT_NO))) {
-    const isYes = data.startsWith(CALLBACK_PATTERNS.SET_DEFAULT_YES);
-    
-    if (isYes) {
-      const accountId = data.replace(CALLBACK_PATTERNS.SET_DEFAULT_YES, "");
-      
-      // TODO: Implement setDefaultAccount mutation
-      // For now, just acknowledge
-      await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-        callbackQueryId,
-        text: language === "ar" ? "✅ تم التعيين كافتراضي" : "✅ Set as default",
-      });
-
-      const successMsg = language === "ar"
-        ? "✅ تم تعيين الحساب كافتراضي"
-        : "✅ Account set as default";
-
-      await ctx.runAction(api.telegram.sendMessage.sendMessage, {
-        chatId,
-        text: successMsg,
-      });
-    } else {
-      await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-        callbackQueryId,
-        text: language === "ar" ? "حسناً" : "OK",
-      });
-    }
-
-    logger.info({ userId: user._id, isYes }, "Default account prompt answered");
-    return;
-  }
-
-  // Handle account type selection (Story 2.1 - AC13 Clarification)
-  if (data && data.startsWith(CALLBACK_PATTERNS.ACCOUNT_TYPE_PREFIX)) {
-    const accountType = data.replace(CALLBACK_PATTERNS.ACCOUNT_TYPE_PREFIX, "");
-
-    logger.info(
-      { userId: user._id, accountType },
-      "Account type selected from clarification"
-    );
-
-    // Acknowledge button press
-    await ctx.runAction(api.telegram.sendMessage.answerCallbackQuery, {
-      callbackQueryId,
-      text: language === "ar" ? "✅ تم الاختيار" : "✅ Selected",
-    });
-
-    // Import clarification handler
-    const { askInitialBalance } = await import("../lib/clarificationHandler");
-    
-    // Ask for initial balance
-    await askInitialBalance(ctx, {
-      userId: user._id,
-      language,
-      chatId,
-      accountType,
-    });
-
-    logger.info({ userId: user._id, accountType }, "Asking for initial balance");
-    return;
-  }
+  // Route callback to appropriate handler via registry
+  await routeCallback({
+    ctx,
+    userId: user._id,
+    language,
+    chatId,
+    callbackQueryId,
+    data: data || "",
+    message,
+  });
 }
 
 /**
@@ -553,8 +324,7 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
           });
         }
 
-        // Check if user is in middle of clarification flow (Story 2.1 - AC13)
-        // Look for pending clarify_balance action
+        // Check if user is in middle of clarification flow or edit account name flow
         const user = await _ctx.runQuery(api.users.getByTelegramId.getByTelegramId, {
           telegramId: String(userData.telegramId),
         });
@@ -566,7 +336,108 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
           });
           const userLanguage: "ar" | "en" = userProfile?.language || "ar";
 
-          // Check for pending balance clarification using query
+          // Check for active conversation state
+          const conversationState = await _ctx.runQuery(api.conversationStates.get.get, {
+            userId: user._id,
+          });
+
+          if (conversationState && conversationState.stateType === "awaiting_account_name") {
+            // User is providing new account name
+            logger.info(
+              { userId: user._id, messageText: message.text },
+              "Processing account name input from edit flow"
+            );
+
+            const { accountId, oldName } = conversationState.stateData;
+            const newName = message.text;
+
+            // Validate name
+            const { validateAccountName, createNameConfirmation, createDuplicateNameError } = 
+              await import("../lib/editAccountName");
+            
+            const validation = validateAccountName(newName, userLanguage);
+
+            if (!validation.isValid) {
+              // Send validation error and retry prompt
+              await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
+                chatId: message.chatId,
+                text: validation.error!,
+              });
+
+              return new Response(JSON.stringify({ ok: true }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              });
+            }
+
+            // Check for duplicate name
+            const existingAccount = await _ctx.runQuery(api.accounts.getByName.getByName, {
+              userId: user._id,
+              accountName: validation.trimmedName!,
+            });
+
+            if (existingAccount && existingAccount._id !== accountId) {
+              // Duplicate name found
+              const errorMsg = createDuplicateNameError(validation.trimmedName!, userLanguage);
+              
+              await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
+                chatId: message.chatId,
+                text: errorMsg,
+              });
+
+              return new Response(JSON.stringify({ ok: true }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              });
+            }
+
+            // Name is valid - show confirmation
+            const confirmation = createNameConfirmation(
+              oldName,
+              validation.trimmedName!,
+              accountId,
+              userLanguage
+            );
+
+            // Update conversation state to awaiting confirmation
+            await _ctx.runMutation(api.conversationStates.set.set, {
+              userId: user._id,
+              stateType: "awaiting_name_confirmation",
+              stateData: {
+                accountId,
+                oldName,
+                newName: validation.trimmedName!,
+              },
+              expirationMinutes: 5,
+            });
+
+            // Send confirmation message
+            await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
+              chatId: message.chatId,
+              text: confirmation.message,
+              parseMode: "Markdown",
+              replyMarkup: confirmation.keyboard,
+            });
+
+            // Store message in history
+            await _ctx.runMutation(api.messages.create.create, {
+              userId: user._id,
+              role: "user",
+              content: message.text,
+            });
+
+            logger.info(
+              { userId: user._id, newName: validation.trimmedName },
+              "Name confirmation sent"
+            );
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          // Check for pending balance clarification
           const pendingBalances = await _ctx.runQuery(
             api.pendingActions.getPendingByUserAndType.getPendingByUserAndType,
             {
@@ -641,91 +512,247 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
           }
         }
 
-        // No slash command detected - check for natural language account commands
-        // Story 2.1: Handle natural language account creation
-        // Use keyword detection for routing, let handler do full AI parsing
-        const lowerText = message.text.toLowerCase();
-        const accountKeywords = [
-          "create", "account", "أنشئ", "حساب", "إنشاء",
-          "wallet", "محفظة", "bank", "بنك", "cash", "نقدي"
-        ];
+        // AI-DRIVEN INTENT ROUTING
+        logger.info({
+          updateId: update.update_id,
+          telegramId: userData.telegramId,
+          textPreview: message.text.substring(0, 50),
+        }, "Parsing message with AI for intent detection");
 
-        const hasAccountKeyword = accountKeywords.some(keyword => lowerText.includes(keyword));
+        try {
+          // Get user profile for language
+          const aiUser = await _ctx.runQuery(api.users.getByTelegramId.getByTelegramId, {
+            telegramId: String(userData.telegramId),
+          });
 
-        if (hasAccountKeyword) {
+          if (!aiUser) {
+            logger.warn({ telegramId: userData.telegramId }, "User not found for AI parsing");
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          const aiProfile = await _ctx.runQuery(api.users.getProfile.getProfile, {
+            userId: aiUser._id,
+          });
+          const aiLanguage: "ar" | "en" = aiProfile?.language || "ar";
+
+          // Fetch recent conversation history for AI context
+          const conversationHistory = await _ctx.runQuery(api.messages.getRecent.getRecent, {
+            userId: aiUser._id,
+            limit: 10,
+          });
+
+          // UNIFIED PARSER: Single AI call detects ALL intent types
+          // Performance: ~2 seconds instead of ~9 seconds (3 sequential calls)
+          const parseResult = await _ctx.runAction(api.ai.parseUnifiedIntent.parseUnifiedIntent, {
+            userMessage: message.text,
+            language: aiLanguage,
+            conversationHistory,
+          });
+
           logger.info({
             updateId: update.update_id,
             telegramId: userData.telegramId,
-            textPreview: message.text.substring(0, 50),
-          }, "Account-related keywords detected - routing to createAccountCommand");
+            intent: parseResult.intent,
+            confidence: parseResult.confidence,
+          }, "Unified intent detected (single AI call)");
 
-          try {
-            const { CreateAccountCommandHandler } = await import("../commands/createAccountCommand");
-            const handler = new CreateAccountCommandHandler();
+          // Route based on AI-detected intent
+          if (parseResult.intent === "view_accounts" && parseResult.confidence >= 0.7) {
+            const { ViewAccountsCommandHandler } = await import("../commands/viewAccountsCommand");
+            const handler = new ViewAccountsCommandHandler();
             await handler.execute(_ctx, userData, message.chatId, message.text);
             
             result.success = true;
-            
             const processingTime = Date.now() - startTime;
             logger.info({
               updateId: update.update_id,
               processingTimeMs: processingTime,
-            }, "Account command processed successfully");
+            }, "View accounts command processed via AI routing");
 
             return new Response(JSON.stringify({ ok: true }), {
               status: 200,
               headers: { "Content-Type": "application/json" },
             });
-          } catch (error) {
-            logger.error({
-              error: error instanceof Error ? error.message : String(error),
-              updateId: update.update_id,
-              telegramId: userData.telegramId,
-            }, "Error processing account command");
+          } else if (parseResult.intent === "create_account" && parseResult.confidence >= 0.7) {
+            const { CreateAccountCommandHandler } = await import("../commands/createAccountCommand");
+            const handler = new CreateAccountCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text);
             
-            // Send error message to user
-            const errorMsg = language === "ar"
-              ? "❌ عذراً، حدث خطأ أثناء معالجة طلبك. الرجاء المحاولة مرة أخرى."
-              : "❌ Sorry, an error occurred while processing your request. Please try again.";
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Create account command processed via AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else if (parseResult.intent === "edit_account" && parseResult.confidence >= 0.7) {
+            const { EditAccountCommandHandler } = await import("../commands/editAccountCommand");
+            const handler = new EditAccountCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text);
+            
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Edit account command processed via AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else if (parseResult.intent === "set_default_account" && parseResult.confidence >= 0.7) {
+            const { SetDefaultAccountCommandHandler } = await import("../commands/setDefaultAccountCommand");
+            const handler = new SetDefaultAccountCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text);
+            
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Set default account command processed via AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else if (parseResult.intent === "delete_account" && parseResult.confidence >= 0.7) {
+            const { DeleteAccountCommandHandler } = await import("../commands/deleteAccountCommand");
+            const handler = new DeleteAccountCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text);
+            
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Delete account command processed via AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else if (parseResult.intent === "log_expense" && parseResult.confidence >= 0.7) {
+            // Expense logging intent - Pass parsed result to avoid duplicate parsing
+            const { LogExpenseCommandHandler } = await import("../commands/logExpenseCommand");
+            const handler = new LogExpenseCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text, parseResult);
+            
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Log expense command processed via unified AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else if (parseResult.intent === "log_income" && parseResult.confidence >= 0.7) {
+            // Income logging intent - Pass parsed result to avoid duplicate parsing
+            const { LogIncomeCommandHandler } = await import("../commands/logIncomeCommand");
+            const handler = new LogIncomeCommandHandler();
+            await handler.execute(_ctx, userData, message.chatId, message.text, parseResult);
+            
+            result.success = true;
+            const processingTime = Date.now() - startTime;
+            logger.info({
+              updateId: update.update_id,
+              processingTimeMs: processingTime,
+            }, "Log income command processed via unified AI routing");
+
+            return new Response(JSON.stringify({ ok: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          } else {
+
+            // Unknown or low confidence intent - Use AI to generate contextual response
+            logger.info({
+              updateId: update.update_id,
+              intent: parseResult.intent,
+              confidence: parseResult.confidence,
+              message: message.text,
+              historyLength: conversationHistory.length,
+            }, "Unknown or low confidence intent - generating AI response with context");
+
+            // Store user message in history BEFORE generating response
+            await _ctx.runMutation(api.messages.create.create, {
+              userId: aiUser._id,
+              role: "user",
+              content: message.text,
+            });
+
+            // Call AI to generate a helpful, contextual response with conversation history
+            const aiResponse = await _ctx.runAction(api.ai.nlParser.generateContextualResponse, {
+              userMessage: message.text,
+              language: aiLanguage,
+              availableFeatures: ["create_account", "view_accounts", "edit_account", "log_expense", "log_income"],
+              conversationHistory,
+            });
+
+            // Store assistant response in history
+            await _ctx.runMutation(api.messages.create.create, {
+              userId: aiUser._id,
+              role: "assistant",
+              content: aiResponse,
+            });
 
             await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
               chatId: message.chatId,
-              text: errorMsg,
+              text: aiResponse,
             });
+
+            logger.info({
+              updateId: update.update_id,
+              responseLength: aiResponse.length,
+            }, "AI contextual response sent");
 
             return new Response(JSON.stringify({ ok: true }), {
               status: 200,
               headers: { "Content-Type": "application/json" },
             });
           }
+        } catch (error) {
+          logger.error({
+            error: error instanceof Error ? error.message : String(error),
+            updateId: update.update_id,
+            telegramId: userData.telegramId,
+          }, "Error in AI intent routing");
+
+          // Fallback error message
+          const errorUser = await _ctx.runQuery(api.users.getByTelegramId.getByTelegramId, {
+            telegramId: String(userData.telegramId),
+          });
+          const errorProfile = errorUser ? await _ctx.runQuery(api.users.getProfile.getProfile, {
+            userId: errorUser._id,
+          }) : null;
+          const errorLanguage: "ar" | "en" = errorProfile?.language || "ar";
+
+          const errorMsg = errorLanguage === "ar"
+            ? "❌ عذراً، حدث خطأ أثناء معالجة طلبك. الرجاء المحاولة مرة أخرى."
+            : "❌ Sorry, an error occurred while processing your request. Please try again.";
+
+          await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
+            chatId: message.chatId,
+            text: errorMsg,
+          });
+
+          return new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        // No keywords matched - send help message
-        logger.info({
-          updateId: update.update_id,
-          telegramId: userData.telegramId,
-          messagePreview: message.text.substring(0, 30),
-        }, "Message did not match any keywords - sending help");
-
-        // Get user profile for language
-        const helpUser = await _ctx.runQuery(api.users.getByTelegramId.getByTelegramId, {
-          telegramId: String(userData.telegramId),
-        });
-
-        const helpUserProfile = helpUser ? await _ctx.runQuery(api.users.getProfile.getProfile, {
-          userId: helpUser._id,
-        }) : null;
-
-        const helpLanguage: "ar" | "en" = helpUserProfile?.language || "ar";
-
-        const helpMsg = helpLanguage === "ar"
-          ? "لم أفهم طلبك. استخدم /help لمعرفة الأوامر المتاحة.\n\nأمثلة:\n• أنشئ حساب محفظة برصيد 500 جنيه\n• Create bank account with 1000 USD"
-          : "I didn't understand your request. Use /help to see available commands.\n\nExamples:\n• Create cash account with 500 EGP\n• أنشئ حساب بنك برصيد 1000 جنيه";
-
-        await _ctx.runAction(api.telegram.sendMessage.sendMessage, {
-          chatId: message.chatId,
-          text: helpMsg,
-        });
       }
     }
 
@@ -740,7 +767,7 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
       hasMessage: !!message,
     }, "Webhook processed successfully");
 
-    // Warn if processing time exceeds target (AC4)
+    // Warn if processing time exceeds target
     if (processingTime > 500) {
       logger.warn({
         updateId: update.update_id,
@@ -749,14 +776,14 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
       }, "Processing time exceeded target");
     }
 
-    // Return 200 OK (AC1)
+    // Return 200 OK
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
 
   } catch (error) {
-    // Log error with full context (AC8)
+    // Log error with full context
     const processingTime = Date.now() - startTime;
     logger.error({
       error: error instanceof Error ? error.message : String(error),
@@ -767,7 +794,7 @@ export const webhook = httpAction(async (_ctx, request): Promise<Response> => {
 
     result.error = error instanceof Error ? error.message : "Unknown error";
 
-    // Return 200 OK even on errors to prevent Telegram retries (AC8)
+    // Return 200 OK even on errors to prevent Telegram retries
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -1,0 +1,206 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>AI Expense Logging</title>
+    <status>Review Passed - ADR-004 Phase 1 Complete</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <lastUpdated>2025-10-18 (Session 3: ADR-004 Phase 1 Implementation)</lastUpdated>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>registered user with at least one active account</asA>
+    <iWant>to log expenses using natural language in Arabic or English (e.g., "دفعت 50 جنيه على القهوة" or "spent 20 on coffee")</iWant>
+    <soThat>I can quickly track my spending without filling out forms or navigating complex menus, while the AI automatically extracts amount, category, description, and account details with 85%+ accuracy</soThat>
+    <tasks>
+      - Task 1: Create Expense Intent Parser (AC: #1, #2, #3, #4, #16)
+      - Task 2: Create Category Auto-Assignment Logic (AC: #6, #14)
+      - Task 3: Create Date Parser (AC: #12)
+      - Task 4: Create Account Selector for Expenses (AC: #5, #18)
+      - Task 5: Create Expense Confirmation Builder (AC: #7, #10)
+      - Task 6: Create Expense Transaction Mutation (AC: #8, #13)
+      - Task 7: Create Success Response Handler (AC: #9)
+      - Task 8: Create Edit Flow Handler (AC: #10)
+      - Task 9: Create Log Expense Command Handler (AC: #1, #17)
+      - Task 10: Update Webhook Callback Handler (AC: #7, #10, #11)
+      - Task 11: Handle Account Selection Callback (AC: #18)
+      - Task 12: Handle Category Selection Callback (AC: #14)
+      - Task 13: Add Expense Intent to AI Parser (AC: #1, #3)
+      - Task 14: Create Pending Confirmation Storage (AC: #7, #15, #17)
+      - Task 15: Create Error Recovery Messages (AC: #20)
+      - Task 16: Add Integration Tests (AC: all)
+      - Task 17: Performance Optimization (AC: #19)
+      - Task 18: Update Help Documentation
+      - Task 19: Update Command Registry (AC: #1)
+      - Task 20: Update Webhook Intent Routing (AC: #1)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Natural Language Input - Accept expense logging via conversational text in Arabic/English without rigid syntax</criterion>
+    <criterion id="AC2">AI Entity Extraction - RORK AI extracts amount, category, description, account with 85%+ accuracy</criterion>
+    <criterion id="AC3">Intent Detection - AI detects "log_expense" intent with 85%+ confidence</criterion>
+    <criterion id="AC4">Bilingual Support - Handles Arabic and English inputs with equivalent accuracy</criterion>
+    <criterion id="AC5">Default Account Assignment - Uses default account if not specified, prompts for selection otherwise</criterion>
+    <criterion id="AC6">Category Auto-Assignment - AI assigns category based on description with 85%+ accuracy</criterion>
+    <criterion id="AC7">Confirmation Workflow - Displays extracted details for verification before saving</criterion>
+    <criterion id="AC8">Balance Deduction - Creates expense transaction, deducts amount from account balance</criterion>
+    <criterion id="AC9">Success Response - Sends confirmation with transaction details and new balance within 2 seconds</criterion>
+    <criterion id="AC10">Edit Flow - Allows editing extracted fields before final confirmation</criterion>
+    <criterion id="AC11">Cancel Flow - Discards data on cancel with 5-minute timeout</criterion>
+    <criterion id="AC12">Date Support - Extracts date from natural language ("أمس", "yesterday", etc.)</criterion>
+    <criterion id="AC13">Amount Validation - Validates amount &gt; 0 and &lt; 1,000,000</criterion>
+    <criterion id="AC14">Category Validation - Asks for selection if AI confidence &lt; 70%</criterion>
+    <criterion id="AC15">Message History Storage - Stores all messages with intent and entities for audit</criterion>
+    <criterion id="AC16">Fallback Regex - Falls back to regex extraction if RORK API fails</criterion>
+    <criterion id="AC17">Conversation Context - Maintains state during confirmation flow</criterion>
+    <criterion id="AC18">Multi-Account Support - Shows account selection menu if multiple accounts exist</criterion>
+    <criterion id="AC19">Performance - Complete flow in &lt; 5 seconds for 95% of requests</criterion>
+    <criterion id="AC20">Error Recovery - Shows helpful error messages with examples</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR3: Expense & Income Logging">
+        Functional requirement for natural language expense logging with AI. Specifies conversational input support, automatic categorization, 85%+ accuracy target, confirmation workflow, and bilingual support (Arabic/English). Response time requirement: &lt;2 seconds.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="NFR1: Performance">
+        Performance requirements: AI agent responds within 2 seconds (95th percentile), transaction logging completes in &lt;5 seconds end-to-end, database queries &lt;500ms.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="AI Integration Architecture">
+        Intent detection + entity extraction pattern using RORK API. Explains dual AI usage: structured intent detection via /agent/chat endpoint and conversational responses via /text/llm/ endpoint. Confidence threshold 85% for automatic processing. Fallback strategy with regex patterns.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Data Architecture - Transactions Table">
+        Transaction schema: userId, accountId, type (expense/income), amount, category, description, date, isDeleted. Indexes: by_user, by_user_date, by_account, by_user_category. Atomic transactions for expense creation + balance update.
+      </doc>
+      <doc path="docs/EPICS.md" title="Epic Breakdown" section="Epic 3: Expense & Income Logging">
+        Epic 3 requirements: Natural language expense logging in Arabic/English, AI extraction with 85%+ accuracy, confirmation workflow, auto-categorization, date support. Success criteria: &lt;5 seconds end-to-end, 100K+ transactions/user supported.
+      </doc>
+      <doc path="docs/decisions/ADR-001-nl-parsing-strategy.md" title="ADR-001: NL Parsing Strategy">
+        Architectural decision to use RORK AI for natural language parsing. Rationale: consistent UX, better Arabic support, aligns with PRD vision. Impact: all commands use natural language with intent detection pattern.
+      </doc>
+      <doc path="docs/decisions/ADR-002-full-conversational-ai.md" title="ADR-002: Full Conversational AI">
+        Decision to implement full conversational AI for all interactions. Natural, intuitive UX with reduced learning curve. All features use natural language, not rigid commands.
+      </doc>
+      <doc path="docs/decisions/ADR-003-conversation-context-retention.md" title="ADR-003: Conversation Context Retention">
+        Decision to retain conversation context across messages. Enables multi-turn interactions, reduces repetition, improves UX. System remembers context during confirmation workflows.
+      </doc>
+      <doc path="docs/RORK-API-COMPLETE-GUIDE.md" title="RORK API Complete Guide">
+        Complete documentation for RORK Toolkit API endpoints. Covers /agent/chat for structured intent detection and /text/llm/ for conversational responses. Includes authentication, request/response formats, error handling, and best practices.
+      </doc>
+      <doc path="docs/stories/story-2.5.md" title="Story 2.5: Delete Account">
+        Pattern reference for confirmation workflows with inline keyboards. Shows multi-step flow: detection → selection → confirmation → execution. Includes error recovery, cancel flow, and status file updates.
+      </doc>
+      <doc path="docs/decisions/ADR-004-ai-prompt-callback-management.md" title="ADR-004: Centralized AI Prompt Management">
+        **[Session 3 - ADR-004 Phase 1 IMPLEMENTED]** Architectural decision addressing recurring issues where AI prompts become out of sync with deployed features. Proposes 3-phase solution: Phase 1 (Complete) - Centralized feature registry as single source of truth; Phase 2 (Planned) - Type-safe callback handlers; Phase 3 (Planned) - Automated validation. Prevents "under development" bugs by auto-generating AI prompts from FEATURE_REGISTRY. Historical issues: Stories 1.1, 2.5, 3.1 all had AI prompt sync problems.
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="convex/ai/prompts.ts" kind="utility" symbol="FEATURE_REGISTRY" reason="**[Session 3 - NEW FILE]** ADR-004 Phase 1: Single source of truth for AI-visible features. Contains centralized registry mapping all features (accounts, expenses, income, etc.) with availability status, version info, and descriptions. Prevents recurring issue where AI says features are 'under development' when they're actually working. Expense logging marked as available: true since Story 3.1."></artifact>
+      <artifact path="convex/ai/prompts.ts" kind="utility" symbol="generateFeatureList" reason="**[Session 3 - NEW FILE]** Generates dynamic feature lists for AI system prompts in Arabic/English. Returns formatted string of available features so AI knows current capabilities. Used by nlParser.ts to keep prompts synchronized with actual deployments."></artifact>
+      <artifact path="convex/ai/prompts.ts" kind="utility" symbol="generatePlannedFeaturesList" reason="**[Session 3 - NEW FILE]** Generates list of planned/unavailable features. Used to tell AI what to say is 'coming soon' instead of making up features or saying available features are under development."></artifact>
+      <artifact path="convex/ai/nlParser.ts" kind="action" symbol="parseAccountIntent" lines="45-310" reason="**[Session 3 - UPDATED]** Existing RORK intent detection pattern adapted for expense logging. NOW USES centralized feature registry via generateFeatureList() to dynamically generate system prompts. Shows system prompt structure, API call pattern, JSON parsing, and fallback regex handling."></artifact>
+      <artifact path="convex/ai/nlParser.ts" kind="action" symbol="generateContextualResponse" lines="490-631" reason="Conversational AI response generation for unknown intents. Shows RORK /text/llm/ endpoint usage with conversation history support."></artifact>
+      <artifact path="convex/ai/types.ts" kind="types" symbol="IntentDetectionResult" reason="Zod schema for intent detection results. Defines intent, confidence, entities, language structure. Provides type safety for AI parsing.</artifact>
+      <artifact path="convex/schema.ts" kind="schema" symbol="accounts" lines="107-126" reason="Accounts table schema with balance field. Shows structure for account balance updates and foreign key relationships."></artifact>
+      <artifact path="convex/schema.ts" kind="schema" symbol="pendingActions" lines="189-199" reason="Pending actions table for confirmation workflows. Stores actionType, actionData, messageId, expiresAt. Pattern to reuse for expense confirmations."></artifact>
+      <artifact path="convex/schema.ts" kind="schema" symbol="messages" lines="153-167" reason="Messages table for conversation history. Stores role, content, intent, entities. Required for AC15 (message history storage with intent tracking)."></artifact>
+      <artifact path="convex/lib/accountSelector.ts" kind="utility" reason="Account selection utility to reuse for expense account selection (AC5, AC18). Shows account list formatting with balances and inline keyboard creation."></artifact>
+      <artifact path="convex/lib/responseHelpers.ts" kind="utility" reason="Response formatting utilities. Contains success message builders, error formatters. Pattern to extend for expense success responses (AC9)."></artifact>
+      <artifact path="convex/commands/deleteAccountCommand.ts" kind="command" reason="Example command handler with confirmation workflow. Shows pattern: parse intent → validate → show confirmation → execute on callback. Apply pattern to expense logging."></artifact>
+      <artifact path="convex/telegram/webhook.ts" kind="webhook" reason="Main webhook handler routing intents to command handlers. Shows callback_query handling for inline keyboard buttons. Needs updates for expense callbacks (Task 10-12)."></artifact>
+      <artifact path="convex/lib/constants.ts" kind="constants" reason="Help text and system messages. Needs updates to document expense logging feature (Task 18)."></artifact>
+      <artifact path="convex/commands/registry.ts" kind="registry" reason="Command registry mapping intents to handlers. Needs log_expense entry (Task 19)."></artifact>
+    </code>
+
+    <dependencies ecosystem="node" manifest="package.json">
+      <package name="convex" version="^1.16.5">Serverless backend platform with reactive database and TypeScript runtime</package>
+      <package name="ai" version="^5.0.68">Vercel AI SDK for AI provider abstraction and structured outputs</package>
+      <package name="@ai-sdk/google" version="^2.0.20">Google Gemini provider for fallback AI (Flash model, free tier)</package>
+      <package name="@ai-sdk/groq" version="^2.0.24">Groq provider for fallback AI (Llama 3.1 70B, free tier)</package>
+      <package name="zod" version="^3.23.8">Type-safe schema validation for AI outputs and API responses</package>
+      <package name="date-fns" version="^4.1.0">Date manipulation library for relative date parsing (AC12)</package>
+      <package name="pino" version="^9.4.0">Fast JSON logger for structured logging</package>
+      <package name="@sentry/node" version="^8.33.1">Error tracking and monitoring</package>
+      <package name="vitest" version="^2.1.2">Testing framework for unit and integration tests</package>
+      <package name="typescript" version="^5.9.3">TypeScript compiler with strict mode enabled</package>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>AI parsing must achieve 85%+ accuracy for amount, category, description extraction (AC2, AC6)</constraint>
+    <constraint>All expense operations must complete in &lt;5 seconds end-to-end (AC19, NFR1)</constraint>
+    <constraint>Database operations must be atomic - expense creation and balance deduction in single transaction (AC8)</constraint>
+    <constraint>Confirmation required before saving any expense - no auto-execute without user approval (AC7)</constraint>
+    <constraint>Conversation context must be maintained during multi-step flows (AC17, ADR-003)</constraint>
+    <constraint>Fallback regex parsing required if RORK API fails (AC16)</constraint>
+    <constraint>All amounts must be validated: amount &gt; 0 and amount &lt; 1,000,000 (AC13)</constraint>
+    <constraint>Category confidence threshold: if &lt;70% show manual selection menu (AC14)</constraint>
+    <constraint>Pending confirmations expire after 5 minutes to prevent stale data (existing pattern)</constraint>
+    <constraint>All messages stored in messages table with intent and entities for audit trail (AC15)</constraint>
+    <constraint>Bilingual support required: Arabic and English with equivalent accuracy (AC4)</constraint>
+    <constraint>Default account used if not specified, otherwise show selection menu (AC5, AC18)</constraint>
+    <constraint>Error messages must be helpful with examples in user's language (AC20)</constraint>
+    <constraint>Soft delete pattern for transactions - never hard delete financial records (schema design principle)</constraint>
+    <constraint>TypeScript strict mode enabled - all code must be type-safe with no compiler errors</constraint>
+    <constraint>**[Session 3 - ADR-004]** ALL new features MUST update FEATURE_REGISTRY in convex/ai/prompts.ts before merging - set available: true when feature is deployed, add description/storyId/since fields. This prevents recurring bug where AI says features are "under development" after they're working.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="RORK /text/llm/ API" kind="REST endpoint" signature="POST https://toolkit.rork.com/text/llm/ { messages: [{role, content}] } → {completion: string}" path="convex/ai/nlParser.ts">
+      RORK conversational AI endpoint for free-form responses. Used for unknown intent handling. Simple OpenAI-style format (not streaming).
+    </interface>
+    <interface name="RORK /agent/chat API" kind="REST endpoint" signature="POST https://toolkit.rork.com/agent/chat { model, messages } → SSE stream with text-delta events" path="docs/RORK-API-COMPLETE-GUIDE.md">
+      RORK structured output endpoint for intent detection. Vercel AI SDK v5 format with complex message structure. Parse streaming response to JSON.
+    </interface>
+    <interface name="parseAccountIntent" kind="Convex action" signature="(userMessage: string, language: 'ar' | 'en', conversationHistory?) → IntentDetectionResult" path="convex/ai/nlParser.ts:45-310">
+      Existing pattern for intent detection. Shows RORK API integration, fallback handling, Zod validation. Adapt for expense intent detection.
+    </interface>
+    <interface name="accountSelector" kind="utility function" signature="(ctx, userId, actionType) → {message: string, keyboard: InlineKeyboard}" path="convex/lib/accountSelector.ts">
+      Account selection utility with formatted list and inline keyboard. Reuse for expense account selection (AC5, AC18).
+    </interface>
+    <interface name="pendingActions table" kind="database table" signature="{userId: Id, actionType: string, actionData: any, messageId: number, expiresAt: number}" path="convex/schema.ts:189-199">
+      Stores pending confirmation data with 5-minute TTL. Pattern to use for expense confirmation storage (AC7, Task 14).
+    </interface>
+    <interface name="createExpense mutation" kind="Convex mutation" signature="(userId: Id, accountId: Id, amount: number, category: string, description: string, date: number) → {transaction: Doc, newBalance: number}" path="To be created: convex/transactions/createExpense.ts">
+      New mutation to create expense transaction and update account balance atomically (AC8, Task 6).
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest for unit/integration tests, Playwright for E2E tests. Pattern: Create .test.ts files alongside source files. Test critical business logic, edge cases, error handling. Mock external APIs (RORK) for deterministic tests. Integration tests should cover full workflows end-to-end. Performance tests should verify 5-second end-to-end requirement (AC19). Minimum test coverage: all acceptance criteria must have corresponding automated tests.
+    </standards>
+
+    <locations>
+      - convex/**/*.test.ts (unit and integration tests)
+      - tests/e2e/*.ts (end-to-end tests with Playwright)
+    </locations>
+
+    <ideas>
+      <test ac="AC1" idea="Test natural language parsing: Arabic 'دفعت 50 جنيه على القهوة' and English 'spent 20 on coffee' both extract correct entities"></test>
+      <test ac="AC2" idea="Test entity extraction accuracy: run 100 test phrases, verify 85%+ extract amount, category, description correctly"></test>
+      <test ac="AC3" idea="Test intent detection: log_expense intent detected with >=85% confidence from various expense phrases"></test>
+      <test ac="AC4" idea="Test bilingual support: mixed language 'دفعت 30 on taxi' extracts entities correctly"></test>
+      <test ac="AC5" idea="Test default account: if no account specified, uses default account; if no default, shows selection menu"></test>
+      <test ac="AC6" idea="Test category auto-assignment: 'قهوة'→food, 'تاكسي'→transport, 'سينما'→entertainment with 85%+ accuracy"></test>
+      <test ac="AC7" idea="Test confirmation workflow: extracted details shown, inline keyboard rendered, pending action stored"></test>
+      <test ac="AC8" idea="Test atomic transaction: expense created AND balance deducted in single transaction, rollback on failure"></test>
+      <test ac="AC9" idea="Test success response: confirmation sent with transaction details and new balance within 2 seconds"></test>
+      <test ac="AC10" idea="Test edit flow: user clicks تعديل, shows edit menu, allows field modification, updates confirmation"></test>
+      <test ac="AC11" idea="Test cancel flow: user clicks إلغاء, pending data cleared, cancellation message sent"></test>
+      <test ac="AC12" idea="Test date parsing: 'أمس'→yesterday, 'الأسبوع اللي فات'→last week, 'Monday'→last/next Monday"></test>
+      <test ac="AC13" idea="Test amount validation: reject amount=0, amount=-10, amount=2000000, accept amount=50.5"></test>
+      <test ac="AC14" idea="Test category validation: if AI confidence &lt;70%, show category selection menu with emoji icons"></test>
+      <test ac="AC15" idea="Test message storage: all messages stored in messages table with intent='log_expense' and entities JSON"></test>
+      <test ac="AC16" idea="Test fallback regex: RORK API fails, regex extracts amount from 'دفعت 50 جنيه', confidence=0.6"></test>
+      <test ac="AC17" idea="Test conversation context: multi-step flow maintains state, follow-up 'نعم' continues correctly"></test>
+      <test ac="AC18" idea="Test multi-account: user has 3 accounts, no default, account selection menu shown with balances"></test>
+      <test ac="AC19" idea="Test performance: full flow (parse→confirm→save→respond) completes in &lt;5 seconds for 95% of requests"></test>
+      <test ac="AC20" idea="Test error recovery: parsing fails completely, shows helpful message 'عفواً، لم أفهم. حاول مرة أخرى مثل: دفعت 50 جنيه على القهوة'"></test>
+    </ideas>
+  </tests>
+</story-context>

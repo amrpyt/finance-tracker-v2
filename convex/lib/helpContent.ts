@@ -41,9 +41,22 @@ function generateArabicHelp(): string {
 /start - إعادة البدء والتسجيل
 /help - عرض هذه المساعدة
 
+💼 *إدارة الحسابات:*
+استخدم اللغة الطبيعية لإدارة حساباتك المالية!
+
+*إنشاء حساب جديد:*
+• أنشئ حساب محفظة برصيد 500 جنيه
+• أنشئ حساب بنك اسمه الراجحي برصيد 5000 جنيه
+• اعمل حساب بطاقة ائتمان برصيد -1000 جنيه
+
+*عرض حساباتك:*
+• عرض حساباتي
+• وريني حساباتي
+• حساباتي
+
 🆕 *الميزات القادمة:*
 • تسجيل المصروفات والدخل بالذكاء الاصطناعي
-• إنشاء حسابات متعددة (بنك، محفظة، بطاقة ائتمان)
+• تعديل وحذف الحسابات
 • تتبع الميزانيات الشهرية
 • أهداف الادخار والتخطيط المالي
 • تتبع القروض الشخصية
@@ -53,7 +66,7 @@ function generateArabicHelp(): string {
 إذا كان لديك أي استفسارات أو مشاكل، يمكنك التواصل معنا.
 
 🎯 *نصيحة:*
-ابدأ الآن بإرسال /start لإعداد حسابك!`;
+ابدأ بإنشاء حسابك الأول لتتبع أموالك!`;
 }
 
 /**
@@ -71,9 +84,22 @@ Welcome! I'm the Finance Tracker bot, your personal assistant for managing your 
 /start - Restart and register
 /help - Show this help
 
+💼 *Account Management:*
+Use natural language to manage your financial accounts!
+
+*Create a new account:*
+• Create cash account with 500 EGP
+• Create bank account named CIB with 5000 EGP
+• Create credit card with -1000 EGP
+
+*View your accounts:*
+• Show my accounts
+• List my accounts
+• View accounts
+
 🆕 *Coming Soon:*
 • AI-powered expense and income logging
-• Multiple accounts (bank, wallet, credit card)
+• Edit and delete accounts
 • Monthly budget tracking
 • Savings goals and financial planning
 • Personal loan tracking
@@ -83,5 +109,5 @@ Welcome! I'm the Finance Tracker bot, your personal assistant for managing your 
 If you have any questions or issues, feel free to contact us.
 
 🎯 *Tip:*
-Start now by sending /start to set up your account!`;
+Start by creating your first account to track your money!`;
 }

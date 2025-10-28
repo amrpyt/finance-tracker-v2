@@ -95,6 +95,79 @@ export const sendMessage = action({
 });
 
 /**
+ * Edit existing message
+ * 
+ * Updates the text and/or inline keyboard of an existing message.
+ * Used for refresh functionality in accounts overview.
+ * 
+ * Story 2.2 - AC11: Quick Actions - Refresh button updates message
+ * 
+ * @param chatId - Telegram chat ID
+ * @param messageId - Message ID to edit
+ * @param text - New message text
+ * @param reply_markup - Optional new inline keyboard
+ * 
+ * @returns { success: boolean } - Edit status
+ */
+export const editMessage = action({
+  args: {
+    chatId: v.number(),
+    messageId: v.number(),
+    text: v.string(),
+    parse_mode: v.optional(v.string()),
+    reply_markup: v.optional(v.any()),
+  },
+  handler: async (_ctx, args) => {
+    const { chatId, messageId, text, parse_mode, reply_markup } = args;
+    const botToken = getBotToken();
+
+    // Build request payload
+    const payload: {
+      chat_id: number;
+      message_id: number;
+      text: string;
+      parse_mode?: string;
+      reply_markup?: InlineKeyboardMarkup;
+    } = {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+    };
+
+    if (parse_mode) {
+      payload.parse_mode = parse_mode;
+    }
+
+    if (reply_markup) {
+      payload.reply_markup = reply_markup as InlineKeyboardMarkup;
+    }
+
+    // Edit message via Telegram Bot API
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/editMessageText`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        `Telegram API error: ${response.status} - ${JSON.stringify(errorData)}`
+      );
+    }
+
+    return {
+      success: true,
+    };
+  },
+});
+
+/**
  * Answer callback query (acknowledge button press)
  * 
  * Must be called within 30 seconds of receiving callback_query

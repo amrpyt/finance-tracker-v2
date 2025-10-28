@@ -1,0 +1,339 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.4</storyId>
+    <title>Set Default Account</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-16T03:26:00+03:00</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>registered user with multiple accounts</asA>
+    <iWant>to set one account as my default using natural language commands like "اجعل المحفظة الافتراضية" or "set wallet as default"</iWant>
+    <soThat>I can log transactions quickly without specifying an account each time</soThat>
+    <tasks>
+      - Task 1: Create Set Default Account Command Handler (AC: #1, #3, #15)
+      - Task 2: Create Account Selection Flow for Default (AC: #2, #6, #13, #18)
+      - Task 3: Create Set Default Account Mutation (AC: #4, #9, #10, #17, #19)
+      - Task 4: Create Confirmation Workflow (AC: #5, #18)
+      - Task 5: Update Webhook Callback Handler (AC: #2, #5, #8, #14, #18)
+      - Task 6: Create Success Response Handler (AC: #8)
+      - Task 7: Update Account Formatter for Default Indicator (AC: #6)
+      - Task 8: Add Get Default Account Query (AC: #7, #19)
+      - Task 9: Update Transaction Logging to Use Default (AC: #7)
+      - Task 10: Update First Account Creation (AC: #9)
+      - Task 11: Add Set Default to NL Parser (AC: #1, #3)
+      - Task 12: Update Help Documentation (AC: #20)
+      - Task 13: Create Integration Tests (AC: #1-20)
+      - Task 14: Add to Command Registry (AC: #1)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Intent Detection - AI parser detects "set_default_account" intent with 85%+ confidence
+    AC2: Account Selection - Displays numbered list with ⭐ indicator for current default
+    AC3: Bilingual Support - Arabic and English commands with equivalent accuracy
+    AC4: Single Default Enforcement - Only ONE account marked as default per user (atomic)
+    AC5: Confirmation Workflow - Shows current/new default before changing
+    AC6: Visual Indicator - ⭐ emoji in all account lists
+    AC7: Transaction Integration - Uses default when account not specified
+    AC8: Success Response - Confirmation with updated accounts overview
+    AC9: First Account Auto-Default - Automatically set first account as default
+    AC10: Validation Rules - Account exists, user owns, not deleted, not already default
+    AC11: Already Default Handling - Friendly message if already default
+    AC12: No Accounts Error - Clear error with prompt to create account
+    AC13: Single Account Auto-Select - Skip selection menu for single account
+    AC14: Message History - Store all messages with intent/entities
+    AC15: Fallback Regex - Regex patterns if RORK API fails
+    AC16: Performance - Complete flow in < 3 seconds
+    AC17: Audit Trail - Update updatedAt on both old and new default
+    AC18: Cancel Anytime - Cancel at any step
+    AC19: Query Optimization - Use by_user_default index, atomic transaction
+    AC20: Help Documentation - Document in /help command
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR2: Account Management</section>
+        <snippet>Set default account for quick transactions. Each account has: name, type, currency, initial balance. Account balance automatically updates with transactions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR17: Settings & Preferences</section>
+        <snippet>Default account selection. Language preference (Arabic/English). Notification preferences (enable/disable by type).</snippet>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Database Schema - accounts table</section>
+        <snippet>Field: isDefault (boolean) - One default per user. Index: by_user_default for quick default account lookups. Constraint: Only one account can have isDefault=true per user.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 2: Account Management</section>
+        <snippet>Story 4: Default Account - Set default for quick transaction logging. Success Criteria: Account creation < 30 seconds, support 10+ accounts, accurate balance calculations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Create Account</title>
+        <section>AC6: Default Account Handling</section>
+        <snippet>First account automatically set as default (no confirmation needed). Subsequent accounts are NOT auto-default. Uses confirmation workflow pattern and pending actions mechanism.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: View Accounts</title>
+        <section>AC6: Default Account Indicator</section>
+        <snippet>Default account marked with ⭐ emoji in account lists. Account overview display with grouping by type and default account indicator.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3: Edit Account</title>
+        <section>AC11: Default Account Status & Account Selection Pattern</section>
+        <snippet>If editing the default account, maintains isDefault=true. Provides option to transfer default status to another account. Reuse account selection pattern and conversation state management.</snippet>
+      </doc>
+    </docs>
+    
+    <code>
+      <file>
+        <path>convex/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>accounts table</symbol>
+        <lines>107-125</lines>
+        <reason>Defines accounts table with isDefault field and by_user_default index. Critical for understanding data model and query optimization.</reason>
+      </file>
+      <file>
+        <path>convex/accounts/create.ts</path>
+        <kind>mutation</kind>
+        <symbol>create</symbol>
+        <lines>128-149</lines>
+        <reason>Implements first account auto-default logic (AC9). Shows pattern for checking account count and setting isDefault=true for first account.</reason>
+      </file>
+      <file>
+        <path>convex/accounts/list.ts</path>
+        <kind>query</kind>
+        <symbol>list</symbol>
+        <lines>all</lines>
+        <reason>Query for fetching all active accounts. Used in account selection flow (Task 2).</reason>
+      </file>
+      <file>
+        <path>convex/accounts/getById.ts</path>
+        <kind>query</kind>
+        <symbol>getById</symbol>
+        <lines>all</lines>
+        <reason>Fetch single account by ID. Used in confirmation workflow (Task 4).</reason>
+      </file>
+      <file>
+        <path>convex/accounts/update.ts</path>
+        <kind>mutation</kind>
+        <symbol>update</symbol>
+        <lines>all</lines>
+        <reason>Pattern for account mutation with validation and atomic updates. Reference for setDefault mutation (Task 3).</reason>
+      </file>
+      <file>
+        <path>convex/lib/accountFormatter.ts</path>
+        <kind>utility</kind>
+        <symbol>formatAccountsOverview</symbol>
+        <lines>42-114</lines>
+        <reason>Formats account overview with ⭐ indicator for default account (line 83). Must be updated to ensure consistent default indicator across all displays (Task 7).</reason>
+      </file>
+      <file>
+        <path>convex/lib/accountSelector.ts</path>
+        <kind>utility</kind>
+        <symbol>createAccountSelection</symbol>
+        <lines>45-114</lines>
+        <reason>Reusable account selection pattern from Story 2.3. Handles zero accounts, single account auto-select, and multiple account selection with inline keyboard (Task 2).</reason>
+      </file>
+      <file>
+        <path>convex/commands/editAccountCommand.ts</path>
+        <kind>command handler</kind>
+        <symbol>EditAccountCommandHandler</symbol>
+        <lines>all</lines>
+        <reason>Pattern for command handler with AI intent detection, account selection, and confirmation workflow. Template for setDefaultAccountCommand (Task 1).</reason>
+      </file>
+      <file>
+        <path>convex/telegram/webhook.ts</path>
+        <kind>http action</kind>
+        <symbol>webhook</symbol>
+        <lines>all</lines>
+        <reason>Main webhook handler for Telegram messages and callbacks. Must be enhanced to handle set_default_account intent routing and callback handlers (Task 5).</reason>
+      </file>
+      <file>
+        <path>convex/ai/nlParser.ts</path>
+        <kind>action</kind>
+        <symbol>parseAccountIntent</symbol>
+        <lines>all</lines>
+        <reason>AI intent detection for account operations. Must be updated to include "set_default_account" intent with Arabic/English examples (Task 11).</reason>
+      </file>
+      <file>
+        <path>convex/lib/responseHelpers.ts</path>
+        <kind>utility</kind>
+        <symbol>sendAccountUpdateSuccess</symbol>
+        <lines>all</lines>
+        <reason>Pattern for success response handlers. Template for sendSetDefaultSuccess function (Task 6).</reason>
+      </file>
+    </code>
+    
+    <dependencies>
+      <node>
+        <package name="convex" version="^1.16.5">Serverless backend platform with reactive database</package>
+        <package name="zod" version="^3.23.8">Schema validation for mutations and AI outputs</package>
+        <package name="ai" version="^5.0.68">Vercel AI SDK for structured AI outputs</package>
+        <package name="@ai-sdk/google" version="^2.0.20">Google Gemini integration (fallback AI)</package>
+        <package name="@ai-sdk/groq" version="^2.0.24">Groq integration (fallback AI)</package>
+        <package name="date-fns" version="^4.1.0">Date manipulation utilities</package>
+        <package name="typescript" version="^5.9.3">Type safety and compile-time checking</package>
+        <package name="vitest" version="^2.1.2">Unit testing framework</package>
+        <package name="@playwright/test" version="^1.56.0">E2E testing framework</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - ATOMIC TRANSACTION REQUIRED: Setting new default must atomically unset old default to ensure only ONE default per user (AC4, AC19)
+    - USE INDEXED QUERY: Always use by_user_default index for default account lookups (performance optimization - AC19)
+    - REUSE PATTERNS: Reuse account selection pattern from Story 2.3 (convex/lib/accountSelector.ts) - DO NOT recreate
+    - VISUAL CONSISTENCY: ⭐ emoji must appear consistently in ALL account displays (view accounts, selection menus, success messages) - AC6
+    - FIRST ACCOUNT AUTO-DEFAULT: When user creates first account, automatically set isDefault=true WITHOUT confirmation (AC9)
+    - VALIDATION CASCADE: Validate account exists → user owns → not deleted → not already default (AC10)
+    - BILINGUAL SUPPORT: All messages, prompts, and errors must support both Arabic and English (AC3)
+    - CONFIRMATION WORKFLOW: Always show confirmation before changing default, displaying both current and new default (AC5)
+    - CANCEL SUPPORT: User can cancel at any step (account selection, confirmation) with "إلغاء" button or message (AC18)
+    - PERFORMANCE TARGET: Complete flow (message → AI → selection → confirmation → update → response) in < 3 seconds (AC16)
+    - TRANSACTION INTEGRATION: Update transaction logging to use default account when accountId not specified (AC7, Task 9)
+    - AUDIT TRAIL: Update updatedAt timestamp on BOTH old default (if exists) and new default account records (AC17)
+    - ERROR HANDLING: If RORK API fails, fall back to regex patterns for Arabic/English commands (AC15)
+    - MESSAGE HISTORY: Store all messages (user request, selection, confirmation, success) in messages table with intent and entities (AC14)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>setDefault mutation</name>
+      <kind>Convex mutation</kind>
+      <signature>
+        export const setDefault = mutation({
+          args: {
+            userId: v.id("users"),
+            accountId: v.id("accounts")
+          },
+          handler: async (ctx, args) => {
+            // 1. Validate account exists and user owns it
+            // 2. Check if already default (return early with friendly message)
+            // 3. Atomic transaction:
+            //    a. Query current default using by_user_default index
+            //    b. If exists, set isDefault=false and update updatedAt
+            //    c. Set new account isDefault=true and update updatedAt
+            // 4. Return both old default (if exists) and new default
+          }
+        });
+      </signature>
+      <path>convex/accounts/setDefault.ts</path>
+    </interface>
+    
+    <interface>
+      <name>getDefault query</name>
+      <kind>Convex query</kind>
+      <signature>
+        export const getDefault = query({
+          args: { userId: v.id("users") },
+          handler: async (ctx, args) => {
+            // Use by_user_default index for fast lookup
+            // Return default account or null if no default set
+          }
+        });
+      </signature>
+      <path>convex/accounts/getDefault.ts</path>
+    </interface>
+    
+    <interface>
+      <name>SetDefaultAccountCommandHandler</name>
+      <kind>Command handler class</kind>
+      <signature>
+        export class SetDefaultAccountCommandHandler implements CommandHandler {
+          async execute(ctx, userId, message, language) {
+            // 1. Parse intent using AI (set_default_account)
+            // 2. If confidence < 0.7, show clarification with account list
+            // 3. Call account selection flow (reuse accountSelector.ts)
+            // 4. Return selection message or auto-select if single account
+          }
+        }
+      </signature>
+      <path>convex/commands/setDefaultAccountCommand.ts</path>
+    </interface>
+    
+    <interface>
+      <name>Webhook callback handlers</name>
+      <kind>Telegram callback_query handlers</kind>
+      <signature>
+        // In convex/telegram/webhook.ts callback_query handler:
+        
+        case "select_account_default_{accountId}":
+          // Show confirmation workflow
+          
+        case "confirm_set_default_{accountId}":
+          // Call setDefault mutation
+          // Send success message with updated accounts overview
+          
+        case "cancel_set_default":
+          // Delete pending action
+          // Send "تم الإلغاء" message
+      </signature>
+      <path>convex/telegram/webhook.ts</path>
+    </interface>
+    
+    <interface>
+      <name>parseAccountIntent enhancement</name>
+      <kind>AI intent detection</kind>
+      <signature>
+        // Add to intent schema in convex/ai/nlParser.ts:
+        intent: z.enum([
+          ...,
+          'set_default_account',  // NEW
+          ...
+        ]),
+        
+        // Add examples to system prompt:
+        // AR: "اجعل الحساب الافتراضي", "غير الحساب الافتراضي", "خلي المحفظة افتراضية"
+        // EN: "set default account", "make this default", "change default account"
+      </signature>
+      <path>convex/ai/nlParser.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests using Vitest for mutations and queries. Integration tests using Playwright for E2E flows. Test atomic transactions to verify only one default at any time. Test first account auto-default behavior. Test transaction logging integration (uses default when account not specified). Performance test: complete flow < 3 seconds. Bilingual test coverage (Arabic/English).
+    </standards>
+    
+    <locations>
+      - convex/accounts/setDefault.test.ts (unit tests for mutation)
+      - convex/accounts/getDefault.test.ts (unit tests for query)
+      - convex/commands/setDefaultAccountCommand.test.ts (unit tests for command handler)
+      - tests/e2e/set-default-account.spec.ts (E2E integration tests)
+    </locations>
+    
+    <ideas>
+      - Test AC4: Verify atomic transaction ensures only ONE default per user (no race conditions)
+      - Test AC9: Verify first account automatically set as default on creation
+      - Test AC10: Validate account exists, user owns, not deleted, not already default
+      - Test AC11: Verify friendly message when account already default
+      - Test AC12: Verify error message when user has zero accounts
+      - Test AC13: Verify single account auto-selects and skips to confirmation
+      - Test AC7: Verify transaction logging uses default account when accountId not specified
+      - Test AC16: Verify complete flow completes in < 3 seconds
+      - Test AC17: Verify updatedAt timestamp updated on both old and new default
+      - Test AC18: Verify cancel at each step (account selection, confirmation)
+      - Test AC3: Verify bilingual support (Arabic/English commands)
+      - Test race condition: Two concurrent setDefault requests should not create duplicate defaults
+      - Test edge case: Changing default from account A to account B, then back to account A
+      - Test integration: After setting default, verify view accounts shows ⭐ indicator correctly
+      - Test integration: After setting default, verify transaction logging uses new default
+    </ideas>
+  </tests>
+</story-context>

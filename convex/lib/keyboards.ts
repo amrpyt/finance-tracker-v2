@@ -156,3 +156,49 @@ export function getDefaultAccountPromptKeyboard(accountId: string, language: "ar
     ],
   };
 }
+
+/**
+ * Get accounts overview quick actions keyboard (Story 2.2 - AC11, Story 2.5)
+ * 
+ * Creates a 2x2 grid keyboard for common account actions.
+ * Used in accounts overview display for quick access to common operations.
+ * 
+ * @param language - User's preferred language
+ * @returns Inline keyboard with Add/Edit/Delete/Refresh buttons
+ * 
+ * Button Layout: 
+ * [➕ إضافة حساب] [✏️ تعديل]
+ * [🗑️ حذف] [🔄 تحديث]
+ * 
+ * Callback Data:
+ * - "create_account" → Add new account
+ * - "edit_account_select" → Edit existing account
+ * - "delete_account_select" → Delete existing account
+ * - "refresh_accounts" → Refresh accounts view
+ */
+export function getAccountsOverviewKeyboard(language: "ar" | "en"): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: language === "ar" ? "➕ إضافة حساب" : "➕ Add Account",
+          callback_data: "create_account",
+        },
+        {
+          text: language === "ar" ? "✏️ تعديل" : "✏️ Edit",
+          callback_data: "edit_account_select",
+        },
+      ],
+      [
+        {
+          text: language === "ar" ? "🗑️ حذف" : "🗑️ Delete",
+          callback_data: "delete_account_select",
+        },
+        {
+          text: language === "ar" ? "🔄 تحديث" : "🔄 Refresh",
+          callback_data: "refresh_accounts",
+        },
+      ],
+    ],
+  };
+}

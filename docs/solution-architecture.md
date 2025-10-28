@@ -142,9 +142,45 @@ Telegram Delivery
 
 ## AI Integration Architecture
 
-### Intent Detection Pattern (No Tool Calling)
+### Dual AI Usage Pattern (Updated 2025-10-16)
 
-**Why No Tool Calling?**
+**Philosophy:** AI for TWO distinct purposes - Intent Detection + Natural Conversation
+
+```typescript
+User Message
+    ↓
+AI Intent Detector (parseAccountIntent)
+    ↓
+┌──────────────┬───────────────┬──────────────┐
+│              │               │              │
+create_       view_          unknown         
+account       accounts       intent          
+│              │               │              
+↓              ↓               ↓              
+Handler       Handler    AI Conversation     
+                        (generateContextualResponse)
+                              ↓
+                         Natural Reply
+```
+
+**1. Intent Detection** (Structured Output)
+- **Purpose:** Route to specific business logic handlers
+- **API:** RORK `/text/llm/` endpoint (Simple OpenAI-style format)
+- **ACTUAL IMPLEMENTATION:** Uses `/text/llm/` NOT `/agent/chat` - see nlParser.ts, parseExpenseIntent.ts
+- **Output:** JSON with intent, entities, confidence
+- **Example:** "أنشئ حساب محفظة" → `{intent: "create_account", entities: {type: "cash"}}`
+
+**2. Conversational AI** (Free-form Response)
+- **Purpose:** Handle greetings, questions, general conversation
+- **API:** RORK `/text/llm/` (Simple OpenAI-style format)
+- **Output:** Plain text natural response
+- **Example:** "ازيك" → "أهلاً وسهلاً! أنا تمام الحمد لله، إنت عامل إيه؟"
+
+**IMPORTANT NOTE:** Both intent detection and conversation use the SAME `/text/llm/` endpoint with simple message format. The `/agent/chat` endpoint mentioned in early designs was NOT implemented.
+
+### Why No Tool Calling?
+
+**Intent Detection Approach:**
 - LLMs are unreliable at tool execution
 - Hard to debug when tools fail
 - Loss of control over business logic
@@ -162,11 +198,15 @@ switch(intent.intent) {
   case "log_expense":
     await ctx.runMutation(api.transactions.create, intent.entities);
     break;
+  case "unknown":
+    // NEW: Route to conversational AI instead of error
+    const response = await generateContextualResponse(userMessage, language);
+    return response;
   // ... more cases
 }
 
-// Step 3: AI generates natural response
-const response = await generateResponse(intent, result);
+// Step 3: Send confirmation/response
+await sendMessage(chatId, response);
 ```
 
 ### Intent Schema
@@ -195,6 +235,44 @@ const IntentSchema = z.object({
   clarificationNeeded: z.string().optional()
 });
 ```
+
+### RORK API Endpoints Usage
+
+**ACTUAL IMPLEMENTATION (as of 2025-10-18):**
+
+We use ONLY ONE endpoint for everything: **`/text/llm/`**
+
+```typescript
+// Used for: parseAccountIntent(), parseExpenseIntent(), parseIntent(), generateContextualResponse()
+// Format: Simple OpenAI-style (same for all use cases)
+const rorkUrl = process.env.RORK_TOOLKIT_URL || "https://toolkit.rork.com";
+const response = await fetch(`${rorkUrl}/text/llm/`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage }
+    ]
+  })
+});
+
+// Response: Simple JSON { completion: "..." }
+const data = await response.json();
+return data.completion; // Parse as JSON for structured intent, or use as-is for conversation
+```
+
+**Why `/text/llm/` for everything?**
+- Simpler request format (OpenAI-style vs Vercel AI SDK v5)
+- Works reliably for both structured JSON output and natural conversation
+- No need for SSE streaming complexity
+- Proven in production (all existing parsers use it)
+
+**Original Design (NOT implemented):**
+The architecture originally mentioned `/agent/chat` with Vercel AI SDK v5 format, but this was never implemented. All actual code uses `/text/llm/` for simplicity.
+
+**For New Stories:**
+Always reference `/text/llm/` endpoint. Check nlParser.ts or parseExpenseIntent.ts for current implementation pattern.
 
 ### AI Provider Abstraction
 

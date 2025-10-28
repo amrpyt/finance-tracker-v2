@@ -9,7 +9,7 @@
 
 import { COMMANDS } from "./constants";
 
-export type CommandType = "start" | "help" | null;
+export type CommandType = "start" | "help" | "view_accounts" | "edit_account" | "set_default_account" | "delete_account" | null;
 
 /**
  * Detect command from message text

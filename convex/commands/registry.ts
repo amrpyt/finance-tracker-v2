@@ -14,6 +14,10 @@ import type { CommandHandler } from "./types";
 import type { CommandType } from "../lib/commandRouter";
 import { StartCommandHandler } from "./startCommand";
 import { HelpCommandHandler } from "./helpCommand";
+import { ViewAccountsCommandHandler } from "./viewAccountsCommand";
+import { EditAccountCommandHandler } from "./editAccountCommand";
+import { SetDefaultAccountCommandHandler } from "./setDefaultAccountCommand";
+import { DeleteAccountCommandHandler } from "./deleteAccountCommand";
 
 /**
  * Command Registry
@@ -22,6 +26,10 @@ import { HelpCommandHandler } from "./helpCommand";
 export const commandRegistry: Record<Exclude<CommandType, null>, CommandHandler> = {
   start: new StartCommandHandler(),
   help: new HelpCommandHandler(),
+  view_accounts: new ViewAccountsCommandHandler(),
+  edit_account: new EditAccountCommandHandler(),
+  set_default_account: new SetDefaultAccountCommandHandler(),
+  delete_account: new DeleteAccountCommandHandler(),
 };
 
 /**

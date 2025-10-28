@@ -1,0 +1,433 @@
+<story-context id="story-2.2-context" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>View Accounts with Balance Overview</title>
+    <status>approved</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <updatedAt>2025-10-16</updatedAt>
+    <updateReason>Post-approval conversational AI enhancement</updateReason>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>d:/Vibe Coding/Finance-Tracker-v2.0/docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a registered user</asA>
+    <iWant>to view all my financial accounts with their current balances and totals using natural language commands like "عرض حساباتي" or "show my accounts"</iWant>
+    <soThat>I can quickly see my financial overview across all accounts within 3 seconds</soThat>
+    <tasks>
+      - Task 1: Create View Accounts Command Handler
+      - Task 2: Create Accounts Overview Query
+      - Task 3: Create Balance Calculation Utility
+      - Task 4: Create Account Display Formatter
+      - Task 5: Create Empty State Handler
+      - Task 6: Create Quick Actions Keyboard
+      - Task 7: Integrate with Webhook Handler
+      - Task 8: Update Constants and Language Files
+      - Task 9: Enhance NL Parser for View Accounts Intent
+      - Task 10: Register Command in Command Registry
+      - Task 11: Create Unit Tests
+      - Task 12: Integration Testing
+      - Task 13: E2E Testing with Playwright
+      - Task 14: Documentation &amp; Deployment
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Intent Detection - AI parser (RORK) detects "view_accounts" intent from natural language with 85%+ confidence from commands like "عرض حساباتي", "show accounts", "list my accounts", "حساباتي"</criterion>
+    <criterion id="AC2">Account Retrieval - System retrieves all non-deleted accounts for the user, ordered by isDefault DESC, then createdAt ASC</criterion>
+    <criterion id="AC3">Bilingual Support - Accepts both Arabic ("عرض حساباتي", "أرني حساباتي") and English ("show my accounts", "list accounts", "my accounts") inputs with equivalent accuracy</criterion>
+    <criterion id="AC4">Balance Display - Shows each account with: emoji icon, account name, current balance, currency</criterion>
+    <criterion id="AC5">Account Grouping - Groups accounts by type (Bank, Cash, Credit Card, Digital Wallet) with type headers</criterion>
+    <criterion id="AC6">Default Account Indicator - Clearly marks the default account with ⭐ or "افتراضي" / "Default" badge</criterion>
+    <criterion id="AC7">Total Calculation - Displays total balance across all accounts in user's primary currency (from userProfile.currency)</criterion>
+    <criterion id="AC8">Multi-Currency Handling - If user has accounts in different currencies, shows subtotals per currency before grand total</criterion>
+    <criterion id="AC9">Empty State - If user has zero accounts, shows friendly message with quick action button to create account</criterion>
+    <criterion id="AC10">Account Count - Shows total number of accounts (e.g., "لديك 3 حسابات" / "You have 3 accounts")</criterion>
+    <criterion id="AC11">Quick Actions - Provides inline keyboard buttons for common actions: Add Account, Edit, Refresh</criterion>
+    <criterion id="AC12">Performance - Complete flow (message → AI parsing → query → response) in &lt; 3 seconds</criterion>
+    <criterion id="AC13">Formatting - Uses clean, readable formatting with proper spacing, emojis, and alignment</criterion>
+    <criterion id="AC14">Account Details - Each account shows: type emoji, name, balance with proper number formatting (e.g., "1,000.00 EGP")</criterion>
+    <criterion id="AC15">Fallback Regex - If RORK API fails, falls back to regex patterns for Arabic/English view accounts commands</criterion>
+  </acceptanceCriteria>
+
+  <technicalContext>
+    <architecture>
+      <pattern>AI Intent Detection → Query Accounts → Format Display → Send Response</pattern>
+      <components>
+        <component>convex/commands/viewAccountsCommand.ts - Command handler for view_accounts intent</component>
+        <component>convex/accounts/getOverview.ts - Query to retrieve all user accounts</component>
+        <component>convex/lib/balanceCalculator.ts - Utility for calculating total balances across currencies</component>
+        <component>convex/lib/accountFormatter.ts - Utility for formatting account display with grouping and emojis</component>
+        <component>convex/lib/keyboards.ts - Quick actions keyboard for Add/Edit/Refresh</component>
+      </components>
+      <dataFlow>
+        User Message → Telegram Webhook → AI Parser (RORK) → Intent Router → viewAccountsCommand → getOverview Query → balanceCalculator → accountFormatter → sendMessage → User
+      </dataFlow>
+    </architecture>
+
+    <dependencies>
+      <prerequisite status="completed">Story 2.1 - Create Account (provides accounts table, schema, ACCOUNT_TYPES constants)</prerequisite>
+      <prerequisite status="completed">Story 1.2 - Database Schema (accounts table with by_user index)</prerequisite>
+      <prerequisite status="completed">Story 1.1 - Telegram Bot Setup (webhook handler, sendMessage action)</prerequisite>
+    </dependencies>
+
+    <keyDecisions>
+      <decision id="D1">Group accounts by type (bank, cash, credit_card, digital_wallet) for better visual organization</decision>
+      <decision id="D2">Show default account first with ⭐ indicator for quick identification</decision>
+      <decision id="D3">Multi-currency support: show subtotals per currency, no automatic conversion (future enhancement)</decision>
+      <decision id="D4">Empty state includes quick action button to create first account (reduces friction)</decision>
+      <decision id="D5">Quick actions keyboard with Add/Edit/Refresh for common operations</decision>
+      <decision id="D6">Number formatting with thousands separator (1,000.00) for professional appearance</decision>
+      <decision id="D7">Performance target &lt; 3 seconds using indexed query (by_user index)</decision>
+      <decision id="D8">Regex fallback for RORK API failures ensures system resilience</decision>
+    </keyDecisions>
+
+    <existingComponents>
+      <reuse>convex/accounts/list.ts - Can be extended or used as base for getOverview query</reuse>
+      <reuse>convex/lib/constants.ts - ACCOUNT_TYPES and CURRENCIES already defined in Story 2.1</reuse>
+      <reuse>convex/telegram/sendMessage.ts - Message sending with inline keyboards</reuse>
+      <reuse>convex/ai/nlParser.ts - AI intent detection infrastructure</reuse>
+      <reuse>convex/commands/registry.ts - Command registration system</reuse>
+    </existingComponents>
+
+    <newComponents>
+      <create>convex/commands/viewAccountsCommand.ts - Main command handler</create>
+      <create>convex/accounts/getOverview.ts - Accounts overview query</create>
+      <create>convex/lib/balanceCalculator.ts - Balance calculation utility</create>
+      <create>convex/lib/accountFormatter.ts - Display formatting utility</create>
+      <modify>convex/lib/keyboards.ts - Add getAccountsOverviewKeyboard()</modify>
+      <modify>convex/lib/constants.ts - Add overview message templates</modify>
+      <modify>convex/telegram/webhook.ts - Add view_accounts routing and callbacks</modify>
+      <modify>convex/ai/nlParser.ts - Add view_accounts intent examples</modify>
+    </newComponents>
+
+    <databaseSchema>
+      <table name="accounts">
+        <query>getOverview - Retrieve all non-deleted accounts for userId, ordered by isDefault DESC, createdAt ASC</query>
+        <index>by_user - Used for efficient account retrieval by userId</index>
+        <fields>userId, type, name, balance, currency, isDefault, isDeleted, createdAt</fields>
+      </table>
+      <table name="userProfiles">
+        <query>Get user's primary currency preference for total calculation</query>
+        <fields>userId, currency (default currency for totals)</fields>
+      </table>
+    </databaseSchema>
+
+    <aiIntegration>
+      <intent>view_accounts</intent>
+      <confidence>0.85+ (85%+ accuracy target)</confidence>
+      <triggers>
+        <arabic>عرض حساباتي, حساباتي, أرني حساباتي, اعرض الحسابات</arabic>
+        <english>show my accounts, list accounts, view accounts, my accounts</english>
+      </triggers>
+      <fallback>Removed regex fallback - now uses AI conversation for unknown intents (2025-10-16 update)</fallback>
+      <entities>None required - simple intent detection without entity extraction</entities>
+      
+      <dualAIUsage updatedAt="2025-10-16">
+        <intentDetection>
+          <endpoint>https://toolkit.rork.com/agent/chat</endpoint>
+          <format>Vercel AI SDK v5 (complex message format)</format>
+          <purpose>Route to specific handlers (create_account, view_accounts)</purpose>
+          <action>convex/ai/nlParser.ts::parseAccountIntent</action>
+        </intentDetection>
+        
+        <conversationalAI>
+          <endpoint>https://toolkit.rork.com/text/llm/</endpoint>
+          <format>Simple OpenAI-style {messages: [{role, content}]}</format>
+          <purpose>Handle greetings, questions, general conversation</purpose>
+          <action>convex/ai/nlParser.ts::generateContextualResponse</action>
+          <triggers>
+            <greeting>hello, hi, hey, مرحباً, السلام عليكم, ازيك, صباح الخير</greeting>
+            <questions>اسمك ايه, عرفني عن نفسك, what can you do, إيه اللي تقدر تعمله</questions>
+            <unknown>Any message with intent confidence &lt; 0.7</unknown>
+          </triggers>
+        </conversationalAI>
+        
+        <benefits>
+          <benefit>Natural conversation without rigid commands</benefit>
+          <benefit>Zero learning curve for users</benefit>
+          <benefit>Aligns with PRD vision (FR15: Conversational Interface)</benefit>
+          <benefit>Handles both Arabic and English naturally</benefit>
+        </benefits>
+      </dualAIUsage>
+    </aiIntegration>
+
+    <performanceConsiderations>
+      <target>Complete flow in &lt; 3 seconds (95th percentile)</target>
+      <optimization>Use by_user index for fast account retrieval</optimization>
+      <optimization>Minimal processing - simple formatting, no complex calculations</optimization>
+      <optimization>Cache ACCOUNT_TYPES and message templates in constants</optimization>
+      <monitoring>Log response time for performance tracking</monitoring>
+    </performanceConsiderations>
+  </technicalContext>
+
+  <testingStrategy>
+    <unitTests>
+      <test>Intent detection accuracy for Arabic commands (عرض حساباتي, حساباتي)</test>
+      <test>Intent detection accuracy for English commands (show accounts, list accounts)</test>
+      <test>Account grouping by type (bank, cash, credit_card, digital_wallet)</test>
+      <test>Balance calculation for single currency accounts</test>
+      <test>Balance calculation for multi-currency accounts</test>
+      <test>Number formatting with thousands separator (1,000.00)</test>
+      <test>Default account indicator (⭐) placement</test>
+      <test>Empty state message generation</test>
+      <test>Regex fallback when RORK API fails</test>
+    </unitTests>
+
+    <integrationTests>
+      <test>End-to-end flow: "عرض حساباتي" → accounts overview display</test>
+      <test>End-to-end flow: "show my accounts" → accounts overview display</test>
+      <test>Empty state handling (user with zero accounts)</test>
+      <test>Single account display</test>
+      <test>Multiple accounts display (5+ accounts)</test>
+      <test>Multi-currency accounts display</test>
+      <test>Quick action button callbacks (Add, Edit, Refresh)</test>
+      <test>Refresh button updates account balances</test>
+      <test>Performance verification (&lt; 3 seconds)</test>
+    </integrationTests>
+
+    <e2eTests>
+      <test>Real Telegram bot interaction with Arabic command</test>
+      <test>Real Telegram bot interaction with English command</test>
+      <test>Button click interactions (Add Account, Edit, Refresh)</test>
+      <test>Empty state → Create Account flow</test>
+      <test>Account balance updates after transactions</test>
+    </e2eTests>
+  </testingStrategy>
+
+  <userExperience>
+    <bilingual>
+      <arabic>
+        - Command: "عرض حساباتي" or "حساباتي"
+        - Header: "📊 حساباتك المالية"
+        - Empty State: "لا توجد حسابات بعد. أنشئ حسابك الأول!"
+        - Account Count: "لديك 3 حسابات"
+        - Default Indicator: "⭐ افتراضي"
+        - Total: "المجموع الكلي"
+        - Buttons: "➕ إضافة حساب", "✏️ تعديل", "🔄 تحديث"
+      </arabic>
+      <english>
+        - Command: "show my accounts" or "list accounts"
+        - Header: "📊 Your Financial Accounts"
+        - Empty State: "No accounts yet. Create your first account!"
+        - Account Count: "You have 3 accounts"
+        - Default Indicator: "⭐ Default"
+        - Total: "Total Balance"
+        - Buttons: "➕ Add Account", "✏️ Edit", "🔄 Refresh"
+      </english>
+    </bilingual>
+
+    <displayFormat>
+      <example>
+📊 **حساباتك المالية**
+لديك 3 حسابات
+
+**🏦 الحسابات البنكية**
+⭐ حساب الراجحي - 5,000.00 EGP
+   حساب الأهلي - 2,500.00 EGP
+
+**💵 النقدية**
+   محفظتي - 500.00 EGP
+
+**المجموع الكلي:** 8,000.00 EGP
+
+[➕ إضافة حساب] [✏️ تعديل] [🔄 تحديث]
+      </example>
+    </displayFormat>
+
+    <emptyState>
+      <message>
+📊 **حساباتك المالية**
+
+لا توجد حسابات بعد. 
+أنشئ حسابك الأول لبدء تتبع أموالك! 💰
+
+[➕ إنشاء حساب]
+      </message>
+    </emptyState>
+  </userExperience>
+
+  <postApprovalEnhancements date="2025-10-16">
+    <enhancement type="conversational-ai">
+      <problem>
+        Bot was rejecting general conversation with rigid error messages.
+        Users sending "hello", "ازيك", or "اسمك ايه" received: "لم أفهم طلبك. استخدم /help..."
+        This violated the agentic, conversational vision from PRD FR15.
+      </problem>
+      
+      <solution>
+        Added generateContextualResponse() action in nlParser.ts for natural conversation.
+        Webhook now routes unknown intents to AI conversation instead of error messages.
+        Bot acts like ChatGPT - responding naturally to all user input.
+      </solution>
+      
+      <technicalImplementation>
+        <newAction>
+          <name>generateContextualResponse</name>
+          <location>convex/ai/nlParser.ts</location>
+          <endpoint>POST https://toolkit.rork.com/text/llm/</endpoint>
+          <requestFormat>
+            {
+              messages: [
+                { role: "system", content: "&lt;rich system prompt&gt;" },
+                { role: "user", content: "user message" }
+              ]
+            }
+          </requestFormat>
+          <responseFormat>{ completion: "AI response text" }</responseFormat>
+          <systemPrompt>
+            - Acts as friendly financial assistant
+            - Responds warmly to greetings
+            - Answers questions about capabilities
+            - Bilingual (Arabic/English) with appropriate tone
+            - Brief responses (2-4 lines)
+            - Uses emojis appropriately 💰
+            - Never mentions being AI
+          </systemPrompt>
+        </newAction>
+        
+        <webhookIntegration>
+          <file>convex/telegram/webhook.ts</file>
+          <change>Routes unknown intents to AI conversation</change>
+          <flow>
+            User Message → parseAccountIntent() → 
+            IF (intent === "unknown" OR confidence &lt; 0.7) →
+            generateContextualResponse() → Natural Reply
+          </flow>
+        </webhookIntegration>
+      </technicalImplementation>
+      
+      <results>
+        <example type="greeting">
+          <input>ازيك</input>
+          <output>أهلاً وسهلاً! أنا تمام الحمد لله، إنت عامل إيه؟ جاهز نبدأ نرتّب مصاريفك ونشوف حساباتك سوا؟</output>
+        </example>
+        <example type="capability">
+          <input>عرفني عن نفسك</input>
+          <output>أهلاً وسهلاً! أنا **بوت تتبع المصروفات**، مساعدك الشخصي لإدارة أموالك بسهولة وذكاء. أقدر أساعدك تنشئ حسابات مالية وأعرض لك رصيدك الإجمالي بكل وضوح.</output>
+        </example>
+        <example type="unknown">
+          <input>مينفعش امسح</input>
+          <output>ميزة حذف الحسابات قيد التطوير حالياً 🚧. حالياً يمكنك: عرض حساباتك، إنشاء حسابات جديدة</output>
+        </example>
+      </results>
+      
+      <architecturalDecision>
+        See ADR-002-full-conversational-ai.md for complete rationale.
+        AI now used for TWO purposes:
+        1. Intent Detection (structured routing)
+        2. Conversation (natural responses)
+        Best of both worlds: Smart routing + Natural conversation
+      </architecturalDecision>
+      
+      <impact>
+        <positive>Truly agentic bot behavior - no rigid commands</positive>
+        <positive>Zero learning curve for users</positive>
+        <positive>Aligns with PRD vision perfectly</positive>
+        <positive>Extensible for future conversation features</positive>
+        <negative>Additional AI API calls (~500ms latency)</negative>
+        <negative>Dependency on RORK /text/llm/ endpoint</negative>
+        <mitigation>Graceful fallback to friendly error if AI fails</mitigation>
+      </impact>
+      
+      <futureConsiderations>
+        <consideration>Add conversation history/context (multi-turn conversations)</consideration>
+        <consideration>Personalization based on user preferences</consideration>
+        <consideration>Conversation memory for follow-up questions</consideration>
+        <consideration>Rich media responses (images, charts)</consideration>
+      </futureConsiderations>
+    </enhancement>
+  </postApprovalEnhancements>
+
+  <references>
+    <prd section="FR2">Account Management - View all accounts with current balances</prd>
+    <prd section="FR4">Balance &amp; Overview - View total balance across all accounts</prd>
+    <architecture section="AI-Integration">Intent-based routing pattern</architecture>
+    <epic>Epic 2: Account Management - Story 2: View Accounts</epic>
+    <relatedStory>Story 2.1 - Create Account (provides accounts table and constants)</relatedStory>
+  </references>
+
+  <implementationNotes>
+    <note priority="high">Reuse ACCOUNT_TYPES and CURRENCIES from Story 2.1 constants</note>
+    <note priority="high">Use by_user index for efficient account queries</note>
+    <note priority="medium">Format numbers with thousands separator for professional look</note>
+    <note priority="medium">Group accounts by type for better visual organization</note>
+    <note priority="low">Consider caching account overview for frequent requests (future optimization)</note>
+    <note priority="low">Multi-currency conversion can be added later (for now just show subtotals)</note>
+    
+    <note priority="critical" date="2025-10-16" type="future-stories">
+      CONVERSATIONAL AI PATTERN - REUSABLE FOR ALL FUTURE STORIES:
+      
+      The generateContextualResponse() pattern in nlParser.ts is now CENTRAL to the bot architecture.
+      Any future story that adds new intents MUST:
+      
+      1. Update parseAccountIntent() to detect the new intent
+      2. Route known intents to specific handlers
+      3. Let unknown intents fall through to generateContextualResponse()
+      4. Never add rigid error messages - always use AI conversation
+      
+      REUSABLE FILES (Don't duplicate):
+      - convex/ai/nlParser.ts::generateContextualResponse() - Keep as-is
+      - convex/telegram/webhook.ts - Unknown intent routing pattern
+      - System prompts in generateContextualResponse() - Update to include new features
+      
+      WHEN TO UPDATE:
+      - New feature added → Update system prompt to mention it
+      - New intent added → Add to parseAccountIntent() only
+      - New conversation type → Extend generateContextualResponse() system prompt
+      
+      EXAMPLE FOR STORY 2.3 (Edit Accounts):
+      - Add "edit_account" to parseAccountIntent() intents
+      - Route to EditAccountCommandHandler
+      - Update generateContextualResponse() system prompt:
+        "Currently available features:
+         - Create and edit financial accounts ← NEW
+         - View all accounts with balances"
+      
+      DO NOT:
+      - Create separate conversation handlers per story
+      - Add pattern matching for simple responses
+      - Override the natural AI conversation
+      
+      This ensures consistent, natural conversation across ALL features.
+    </note>
+    
+    <note priority="high" date="2025-10-16" type="file-dependencies">
+      CRITICAL FILES FOR FUTURE STORIES:
+      
+      These files are now SHARED infrastructure - changes affect all stories:
+      
+      1. convex/ai/nlParser.ts
+         - parseAccountIntent() - Add new intents here
+         - generateContextualResponse() - Update system prompt only
+         - Used by: ALL stories
+      
+      2. convex/telegram/webhook.ts
+         - Intent routing logic
+         - Callback handler registration
+         - Used by: ALL stories
+      
+      3. convex/lib/helpContent.ts
+         - /help command content
+         - Should list ALL available features
+         - Update when adding new capabilities
+      
+      4. docs/solution-architecture.md
+         - AI Integration Architecture section
+         - Update when patterns change
+      
+      5. docs/decisions/ADR-002-full-conversational-ai.md
+         - Architectural decision record
+         - Reference for understanding conversational approach
+      
+      WORKFLOW FOR NEW STORIES:
+      1. Add intent to parseAccountIntent()
+      2. Create new command handler
+      3. Add routing in webhook.ts
+      4. Update generateContextualResponse() system prompt
+      5. Update /help content
+      6. Test conversation flow
+    </note>
+  </implementationNotes>
+</story-context>

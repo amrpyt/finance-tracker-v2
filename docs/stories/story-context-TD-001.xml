@@ -1,0 +1,170 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>TD</epicId>
+    <storyId>001</storyId>
+    <title>AI Integration Systematic Improvements (ADR-004 Phases 2-3)</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-TD-001.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>development team</asA>
+    <iWant>type-safe callback handler management and automated validation for AI integration</iWant>
+    <soThat>we eliminate recurring bugs where callback buttons don't work and AI prompts become outdated, saving ~4-5 hours of debugging time per sprint</soThat>
+    <tasks>
+      Phase 2: Type-Safe Callback System (Tasks 1-6, AC1-4)
+      - Task 1: Create callback registry infrastructure with CallbackContext type and CallbackHandler signature
+      - Task 2: Extract account callback handlers to convex/lib/callbackHandlers/account.ts
+      - Task 3: Extract expense callback handlers to convex/lib/callbackHandlers/expense.ts
+      - Task 4: Extract UI action handlers to convex/lib/callbackHandlers/ui.ts
+      - Task 5: Refactor webhook.ts to use registry (remove ~150 lines of if/else chains)
+      - Task 6: Implement compile-time validation with type assertions
+      
+      Phase 3: Automated Validation (Tasks 7-12, AC5-10)
+      - Task 7: Create AI prompt validation tests (tests/integration/ai-prompts.test.ts)
+      - Task 8: Create callback handler validation tests (tests/integration/callback-handlers.test.ts)
+      - Task 9: Configure pre-commit hooks with test commands
+      - Task 10: Update story template with AI integration checklist
+      - Task 11: Documentation and examples
+      - Task 12: Regression testing (all callbacks work, no new bugs)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Callback registry file created with type-safe handler mapping
+    AC2: Existing callback handlers extracted and organized (account.ts, expense.ts, ui.ts)
+    AC3: Webhook refactored to use callback registry (single lookup, no if/else chains)
+    AC4: TypeScript compile-time validation (errors if pattern lacks handler)
+    AC5: AI prompt validation tests created (available features included, unavailable not shown as available)
+    AC6: Callback handler validation tests created (every pattern has handler, no unused handlers)
+    AC7: Pre-commit hooks configured (block commits if tests fail, < 5 sec performance)
+    AC8: Story template updated with AI integration checklist
+    AC9: Implementation documented with examples in ADR-004
+    AC10: Zero regression (all existing callbacks work, no new bugs)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/decisions/ADR-004-ai-prompt-callback-management.md" title="ADR-004: Primary Specification">
+        **[PRIMARY SOURCE]** Complete specification for Phases 2-3. Contains detailed TypeScript examples for callback registry pattern, handler organization, compile-time validation, and automated testing. Section "Phase 2: Type-Safe Callback Registry" (lines 230-357) provides exact implementation pattern. Section "Phase 3: Automated Validation" (lines 360-492) provides test examples and pre-commit hook setup.
+      </doc>
+      <doc path="docs/decisions/ADR-001-nl-parsing-strategy.md" title="ADR-001: NL Parsing Context">
+        Background on RORK Toolkit API usage and intent detection patterns. Relevant for understanding AI integration architecture.
+      </doc>
+      <doc path="docs/stories/story-3.1.md" title="Story 3.1: Where Issues Were Discovered">
+        Senior Developer Review section (lines 500+) documents the recurring issues that prompted ADR-004. Callback handler implementation shows current pattern that needs refactoring. Dev Notes section shows existing callback patterns (CONFIRM_EXPENSE_PREFIX, EDIT_EXPENSE_PREFIX, etc).
+      </doc>
+      <doc path="docs/stories/story-2.5.md" title="Story 2.5: Delete Account Pattern">
+        Reference implementation for confirmation workflows with callbacks. Shows current webhook.ts pattern with if/else chains for callback routing (the pattern we're replacing).
+      </doc>
+      <doc path="docs/stories/story-1.1.md" title="Story 1.1: Initial Account Creation">
+        First implementation of callback handlers. Shows evolution of callback patterns from simple to complex.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture">
+        Section on testing strategy, error handling patterns, and code organization principles. Relevant for Phase 3 automated validation.
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="convex/telegram/webhook.ts" kind="webhook" symbol="callback_query handler" lines="1200-1550" reason="**[PRIMARY REFACTOR TARGET]** Contains ~150 lines of if/else chains for callback routing (lines 1350-1500 approx). This is the code being refactored in Phase 2 Task 5. Current pattern: long sequential if/else checking data.startsWith() for each callback prefix. Target pattern: single routeCallback() call with registry lookup.">
+      </artifact>
+      <artifact path="convex/lib/constants.ts" kind="constants" symbol="CALLBACK PATTERNS" lines="50-120" reason="Defines all callback prefixes as constants (CONFIRM_EXPENSE_PREFIX, EDIT_EXPENSE_PREFIX, etc). These will be referenced in the new callback registry. Phase 2 Task 6 adds compile-time validation to ensure every constant has a registered handler.">
+      </artifact>
+      <artifact path="convex/ai/prompts.ts" kind="utility" symbol="FEATURE_REGISTRY" reason="**[PHASE 1 REFERENCE]** ADR-004 Phase 1 implementation (complete). Shows the pattern for centralized registry with type safety. Use this as architectural reference for callback registry design. Demonstrates generateFeatureList() pattern that can be adapted for callback handler listing.">
+      </artifact>
+      <artifact path="convex/commands/deleteAccountCommand.ts" kind="command" symbol="handleDeleteAccount" reason="Example callback handler implementation. Shows current pattern: handler logic embedded in command file, called from webhook.ts. Phase 2 extracts this to callbackHandlers/account.ts with standard CallbackHandler signature.">
+      </artifact>
+      <artifact path="convex/commands/logExpenseCommand.ts" kind="command" symbol="handleConfirmExpense" reason="Expense callback handler showing confirmation workflow pattern. Phase 2 Task 3 extracts this to callbackHandlers/expense.ts along with edit handlers.">
+      </artifact>
+      <artifact path="convex/lib/accountSelector.ts" kind="utility" symbol="handleSelectAccount" reason="Account selection callback pattern. Shows how UI callbacks differ from command callbacks. Phase 2 Task 4 extracts to callbackHandlers/ui.ts.">
+      </artifact>
+      <artifact path="package.json" kind="config" reason="Check existing test infrastructure. Phase 3 adds vitest integration tests and pre-commit hooks. May need to add husky dependency for pre-commit hooks.">
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="convex">Convex runtime for actions/mutations</package>
+        <package name="typescript">Type safety and compile-time validation</package>
+        <package name="pino">Logging (used in handlers)</package>
+        <package name="vitest" dev="true">Phase 3: Integration testing framework (may need to add)</package>
+        <package name="husky" dev="true">Phase 3: Pre-commit hooks (may need to add)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>**Zero Breaking Changes:** All existing callback buttons must continue working exactly as before. Refactoring is internal only - no user-facing changes.</constraint>
+    <constraint>**Type Safety Required:** TypeScript must enforce handler existence at compile time. No runtime "handler not found" errors allowed.</constraint>
+    <constraint>**Performance:** Callback routing must be O(1) hash lookup (faster than current if/else chains). Pre-commit hooks must run in < 5 seconds.</constraint>
+    <constraint>**Backward Compatibility:** All callback patterns in constants.ts must remain unchanged. Only the routing mechanism changes.</constraint>
+    <constraint>**Code Organization:** Handlers grouped by domain (account, expense, ui). Each handler file exports typed functions. Registry imports all handlers.</constraint>
+    <constraint>**Testing Strategy:** Integration tests, not unit tests. Test actual callback routing and handler execution. Mock Telegram API calls.</constraint>
+    <constraint>**Documentation Standard:** All public functions have JSDoc comments. Examples included in ADR-004. Clear error messages for validation failures.</constraint>
+    <constraint>**Migration Strategy:** Implement Phase 2 completely before Phase 3. Deploy Phase 2 to dev environment and verify all callbacks work. Then add Phase 3 validation.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CallbackContext" kind="TypeScript type" signature="{ ctx: ActionCtx; userId: Id<'users'>; chatId: number; callbackQueryId: string; language: 'ar' | 'en'; profile: any }" path="convex/lib/callbackRegistry.ts">
+      **[NEW TYPE - Phase 2 Task 1]** Standard context object passed to all callback handlers. Contains everything a handler needs to process callback and respond.
+    </interface>
+    <interface name="CallbackHandler" kind="TypeScript function signature" signature="(context: CallbackContext, data: string) => Promise<void>" path="convex/lib/callbackRegistry.ts">
+      **[NEW TYPE - Phase 2 Task 1]** Standard handler function signature. All handlers must match this signature for type safety.
+    </interface>
+    <interface name="CALLBACK_HANDLERS" kind="TypeScript record" signature="Record<string, CallbackHandler>" path="convex/lib/callbackRegistry.ts">
+      **[NEW REGISTRY - Phase 2 Task 1]** Central registry mapping callback prefixes to handler functions. TypeScript validates completeness at compile time.
+    </interface>
+    <interface name="routeCallback" kind="function" signature="(prefix: string, context: CallbackContext, fullData: string) => Promise<void>" path="convex/lib/callbackRegistry.ts">
+      **[NEW FUNCTION - Phase 2 Task 1]** Routes callback to appropriate handler. Throws error if no handler found (fail fast). Used by webhook.ts to replace if/else chains.
+    </interface>
+    <interface name="telegram.answerCallbackQuery" kind="external API" signature="(callbackQueryId: string, options?: { text?: string; show_alert?: boolean }) => Promise<void>" path="webhook.ts">
+      Telegram Bot API method for responding to callback queries. All handlers must call this to acknowledge button press.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Integration Testing Approach:**
+      - Test actual callback routing from webhook.ts through registry to handlers
+      - Mock Telegram API calls (answerCallbackQuery, editMessageText)
+      - Use real Convex context where possible
+      - Verify handler is called with correct context and data
+      
+      **Test Organization:**
+      - tests/integration/ai-prompts.test.ts - AI prompt validation
+      - tests/integration/callback-handlers.test.ts - Callback handler completeness
+      - Each test file is independent, fast (< 1 sec), and fails clearly
+      
+      **Pre-Commit Strategy:**
+      - Run only integration tests (not full test suite)
+      - Fast validation (< 5 sec total)
+      - Block commit if validation fails
+      - Provide actionable error messages
+    </standards>
+    
+    <locations>
+      tests/integration/ - Integration tests for AI and callback validation
+      .husky/pre-commit - Pre-commit hook script
+      package.json - Test scripts: test:prompts, test:callbacks
+    </locations>
+    
+    <ideas>
+      **Phase 2 Testing Ideas:**
+      - AC1: Test CALLBACK_HANDLERS has entries for all patterns in constants.ts
+      - AC2: Test each handler file exports functions with CallbackHandler signature
+      - AC3: Test routeCallback() successfully routes to correct handler
+      - AC4: Test TypeScript compilation fails if handler is missing (negative test)
+      - AC10: Test all existing callbacks still work after refactor (regression suite)
+      
+      **Phase 3 Testing Ideas:**
+      - AC5: Test generateFeatureList() includes all available features from FEATURE_REGISTRY
+      - AC5: Test system prompts don't claim unavailable features are available
+      - AC6: Test every pattern in CALLBACK_PATTERNS has handler in CALLBACK_HANDLERS
+      - AC6: Test no handlers exist that don't have patterns (unused handlers)
+      - AC7: Test pre-commit hook runs tests and blocks commit on failure
+      - AC7: Test pre-commit hook performance is < 5 seconds
+    </ideas>
+  </tests>
+</story-context>

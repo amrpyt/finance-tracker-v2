@@ -1,0 +1,167 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Delete Account - Archive or remove unused accounts with transaction handling</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-16</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a registered user with one or more accounts</asA>
+    <iWant>to delete or archive unused accounts using natural language commands like "احذف حساب المحفظة" or "delete my bank account"</iWant>
+    <soThat>I can keep my account list clean and organized while preserving transaction history for record-keeping and data integrity</soThat>
+    <tasks>
+      <task id="1" ac="1,3,18">Create Delete Account Command Handler</task>
+      <task id="2" ac="2,7,20">Create Account Selection Flow for Deletion</task>
+      <task id="3" ac="8,9">Create Pre-Deletion Validation</task>
+      <task id="4" ac="6,7,10">Create Delete Confirmation Message</task>
+      <task id="5" ac="4,5,15,16">Create Account Soft Delete Mutation</task>
+      <task id="6" ac="12">Update Account List Query to Filter Deleted</task>
+      <task id="7" ac="13">Update Balance Calculation to Exclude Deleted Accounts</task>
+      <task id="8" ac="14">Update Transaction History to Show Deleted Account Indicator</task>
+      <task id="9" ac="2,10,11,17,20">Update Webhook Callback Handler</task>
+      <task id="10" ac="11">Create Success Response Handler</task>
+      <task id="11" ac="1,3">Add Delete Account Intent to NL Parser</task>
+      <task id="12" ac="18">Add Regex Fallback Patterns</task>
+      <task id="13" ac="4,16">Update Database Schema</task>
+      <task id="14" ac="4,5,8,9,15">Add Integration Tests</task>
+      <task id="15" ac="all">Update Help Documentation</task>
+      <task id="16" ac="19">Performance Optimization</task>
+      <task id="17">Error Handling and Edge Cases</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">AI parser (RORK) detects "delete_account" intent from natural language with 85%+ confidence from commands like "احذف الحساب", "delete account", "remove account", "امسح الحساب"</criterion>
+    <criterion id="2">If user has multiple accounts, displays numbered list with account details (emoji, name, type, balance, transaction count) for user to select which account to delete</criterion>
+    <criterion id="3">Accepts both Arabic ("احذف حساب البنك", "امسح المحفظة") and English ("delete bank account", "remove wallet") inputs with equivalent accuracy</criterion>
+    <criterion id="4">Implements soft delete (isDeleted=true) rather than hard delete to preserve referential integrity; deleted accounts remain in database but hidden from user views</criterion>
+    <criterion id="5">All transactions linked to deleted account remain in database with full history intact; transactions are NOT deleted or orphaned</criterion>
+    <criterion id="6">If account has non-zero balance, shows warning: "⚠️ هذا الحساب لديه رصيد [balance] [currency]. هل تريد المتابعة؟" with confirmation required</criterion>
+    <criterion id="7">Shows transaction count in confirmation: "هذا الحساب لديه [count] معاملة. سيتم الاحتفاظ بسجل المعاملات للرجوع إليها." to inform user that history is preserved</criterion>
+    <criterion id="8">If attempting to delete the default account, shows warning: "⚠️ هذا هو حسابك الافتراضي. يجب تعيين حساب افتراضي آخر أولاً" and prevents deletion until another account is set as default</criterion>
+    <criterion id="9">If user has only one account, prevents deletion with message: "❌ لا يمكن حذف آخر حساب. يجب أن يكون لديك حساب واحد على الأقل" to ensure user always has at least one active account</criterion>
+    <criterion id="10">Before deletion, displays detailed confirmation message showing: account name, type, balance, transaction count, and consequences with inline keyboard: "تأكيد الحذف 🗑️" / "إلغاء ❌"</criterion>
+    <criterion id="11">Sends confirmation: "✅ تم حذف الحساب بنجاح!\n🗑️ الحساب المحذوف: [name] ([type])\n📝 تم الاحتفاظ بسجل [count] معاملة للرجوع إليها" and displays updated accounts overview (excluding deleted account)</criterion>
+    <criterion id="12">Deleted accounts excluded from all account lists (view accounts, account selection menus, balance calculations) but remain queryable for transaction history</criterion>
+    <criterion id="13">After deletion, total balance calculations exclude deleted account; individual account balances remain unchanged for historical accuracy</criterion>
+    <criterion id="14">Users can still view transaction history that includes deleted accounts; transactions show account name with "(محذوف)" indicator</criterion>
+    <criterion id="15">Deletion does NOT cascade to related entities (transactions, budgets, goals); only the account record is marked as deleted</criterion>
+    <criterion id="16">Updates deletedAt timestamp and isDeleted flag; maintains createdAt and updatedAt for audit purposes</criterion>
+    <criterion id="17">Stores all messages (user request, account selection, confirmation, success) in messages table with intent and entities</criterion>
+    <criterion id="18">If RORK API fails, falls back to regex patterns for Arabic/English delete account commands</criterion>
+    <criterion id="19">Complete delete flow (message → AI parsing → selection → confirmation → soft delete → response) in &lt; 4 seconds</criterion>
+    <criterion id="20">User can cancel at any step (account selection, confirmation) with "إلغاء" button or message; no changes made until final confirmation</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Epic 2: Account Management">
+        Epic 2 Story #4: Delete Account - Archive or remove unused accounts with transaction handling. Success criteria includes safe deletion with data integrity and support for 10+ accounts.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR2: Account Management">
+        Archive/delete accounts (soft delete with transaction preservation). Users can remove unused accounts while maintaining full transaction history for audit purposes.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="NFR4: Security &amp; Privacy">
+        Audit Trail: Soft deletes maintain transaction history for auditing. Data durability and zero data loss through proper soft delete implementation.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="Database Schema">
+        Accounts table supports soft deletes with isDeleted flag. Design principle: Soft Deletes preserve audit trail for accounts. All data scoped by userId with supporting indexes.
+      </doc>
+      <doc path="docs/stories/story-2.3.md" title="Story 2.3: Edit Account" section="Account Selection Pattern">
+        Established pattern for account selection using accountSelector.ts utility. Displays numbered list with inline keyboard for multi-account scenarios. Includes cancel button at every step.
+      </doc>
+      <doc path="docs/stories/story-2.4.md" title="Story 2.4: Set Default Account" section="Default Account Handling">
+        Default account protection: Cannot perform certain operations on default account without reassignment. Shows ⭐ indicator for default account in all lists.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="convex/schema.ts" kind="schema" symbol="accounts" lines="86-128" reason="Accounts table definition with isDeleted and deletedAt fields for soft delete support. Includes indexes by_user, by_user_active, by_user_default for efficient querying."/>
+      <artifact path="convex/accounts/list.ts" kind="query" symbol="list" lines="21-52" reason="Existing account list query that filters deleted accounts. Needs to be referenced for consistent filtering pattern. Already implements includeDeleted parameter."/>
+      <artifact path="convex/accounts/getById.ts" kind="query" symbol="getById" reason="Account retrieval by ID. Will be used in pre-deletion validation to fetch account details."/>
+      <artifact path="convex/accounts/setDefault.ts" kind="mutation" symbol="setDefault" reason="Default account mutation logic. Reference for default account validation patterns."/>
+      <artifact path="convex/accounts/update.ts" kind="mutation" symbol="update" reason="Account update mutation. Reference for validation patterns and atomic updates."/>
+      <artifact path="convex/lib/accountSelector.ts" kind="utility" symbol="createAccountSelection" lines="46-132" reason="Reusable account selection UI utility. Supports edit, delete, set_default actions. Handles zero/single/multiple account scenarios with auto-selection."/>
+      <artifact path="convex/lib/accountFormatter.ts" kind="utility" symbol="formatAccount" reason="Account formatting utility for consistent display. Will be used in delete confirmation messages."/>
+      <artifact path="convex/lib/responseHelpers.ts" kind="utility" symbol="sendAccountUpdateSuccess" reason="Success response helper pattern. Reference for creating sendAccountDeleteSuccess function."/>
+      <artifact path="convex/telegram/webhook.ts" kind="action" symbol="webhook" lines="1-500" reason="Main webhook handler with callback_query processing. Needs to be extended with delete account callbacks: select_account_delete, confirm_delete, cancel_delete."/>
+      <artifact path="convex/ai/nlParser.ts" kind="action" symbol="parseAccountIntent" reason="AI intent parser for account operations. Needs to be extended with delete_account intent detection."/>
+      <artifact path="convex/commands/editAccountCommand.ts" kind="command" symbol="EditAccountCommand" reason="Reference implementation for account command handlers. Shows pattern for intent detection, validation, and error handling."/>
+      <artifact path="convex/commands/setDefaultAccountCommand.ts" kind="command" symbol="SetDefaultAccountCommand" reason="Reference for default account operations and validation patterns."/>
+    </code>
+    <dependencies>
+      <node>
+        <package name="convex" version="1.16.5">Serverless backend platform with reactive database</package>
+        <package name="typescript" version="5.6.3">Type-safe language for all Convex functions</package>
+        <package name="zod" version="3.23.8">Schema validation for AI outputs and database mutations</package>
+        <package name="@ai-sdk/google" version="0.0.52">Fallback AI provider (Gemini) for intent detection</package>
+        <package name="vitest" version="2.1.2">Testing framework for unit and integration tests</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Soft Delete Pattern: NEVER hard delete accounts. Always use isDeleted flag to preserve referential integrity and audit trail.</constraint>
+    <constraint type="architecture">Transaction Preservation: Zero cascade delete. Transactions are sacred and must never be deleted when account is deleted.</constraint>
+    <constraint type="architecture">Multi-Layer Validation: Pre-deletion validation runs before confirmation UI. Mutation-level validation ensures data integrity at database layer.</constraint>
+    <constraint type="business">Last Account Protection: Users must always have at least one active account. Prevent deletion of only remaining account.</constraint>
+    <constraint type="business">Default Account Protection: Cannot delete default account until another account is set as default.</constraint>
+    <constraint type="data">Audit Trail: Update deletedAt timestamp and isDeleted flag. Maintain createdAt and updatedAt for audit purposes.</constraint>
+    <constraint type="data">Balance Integrity: Individual account balances remain unchanged for historical accuracy. Only total balance calculations exclude deleted accounts.</constraint>
+    <constraint type="performance">Complete delete flow must execute in &lt; 4 seconds end-to-end (intent detection → confirmation → deletion → response).</constraint>
+    <constraint type="testing">Critical test cases: soft delete verification, last account protection, default account protection, transaction preservation, balance calculations, deleted account filtering.</constraint>
+    <constraint type="ux">Cancel Anytime: User can cancel at any step (account selection, confirmation) with no side effects until final confirmation.</constraint>
+    <constraint type="ux">Bilingual Support: All messages, warnings, and confirmations must be available in both Arabic and English with equivalent quality.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="accounts.softDelete" kind="mutation" signature="softDelete(userId: Id&lt;'users'&gt;, accountId: Id&lt;'accounts'&gt;): Promise&lt;Account&gt;" path="convex/accounts/softDelete.ts">
+      Soft delete mutation that marks account as deleted. Validates user ownership, checks for last account and default account protection. Updates isDeleted=true and deletedAt timestamp. Returns deleted account object.
+    </interface>
+    <interface name="accounts.list" kind="query" signature="list(userId: Id&lt;'users'&gt;, includeDeleted?: boolean): Promise&lt;Account[]&gt;" path="convex/accounts/list.ts">
+      Existing query that lists accounts. Already supports includeDeleted parameter. By default filters out deleted accounts (isDeleted=false).
+    </interface>
+    <interface name="lib.validateAccountDeletion" kind="utility" signature="validateAccountDeletion(ctx, userId: Id&lt;'users'&gt;, accountId: Id&lt;'accounts'&gt;): Promise&lt;{valid: boolean, error?: string, account: Account}&gt;" path="convex/lib/validateAccountDeletion.ts">
+      Pre-deletion validation utility. Checks: user ownership, account exists, not already deleted, not default account, not last account. Returns validation result with error message if invalid.
+    </interface>
+    <interface name="lib.deleteAccountConfirmation" kind="utility" signature="deleteAccountConfirmation(account: Account, transactionCount: number, language: 'ar' | 'en'): {message: string, keyboard: InlineKeyboardMarkup}" path="convex/lib/deleteAccountConfirmation.ts">
+      Builds detailed confirmation message with account details, balance warning (if non-zero), transaction count, and consequences. Returns formatted message with confirmation/cancel keyboard.
+    </interface>
+    <interface name="lib.accountSelector.createAccountSelection" kind="utility" signature="createAccountSelection(accounts: SelectableAccount[], language: 'ar' | 'en', action: 'edit' | 'delete' | 'set_default'): AccountSelectionResult" path="convex/lib/accountSelector.ts">
+      Reusable account selection utility. Supports 'delete' action. Handles zero/single/multiple account scenarios. Returns message, keyboard, and auto-selection flag.
+    </interface>
+    <interface name="commands.deleteAccountCommand" kind="command" signature="DeleteAccountCommand.execute(ctx, userId: Id&lt;'users'&gt;, message: string, language: 'ar' | 'en'): Promise&lt;void&gt;" path="convex/commands/deleteAccountCommand.ts">
+      Command handler for delete account intent. Calls AI parser, validates confidence, initiates account selection flow. Handles RORK API failures with regex fallback.
+    </interface>
+    <interface name="transactions.countByAccount" kind="query" signature="countByAccount(accountId: Id&lt;'accounts'&gt;): Promise&lt;number&gt;" path="convex/transactions/countByAccount.ts">
+      Query to count transactions for a specific account. Used in confirmation message to show transaction count. Needed for AC7.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest with TypeScript support. Unit tests for business logic, integration tests for end-to-end flows. Test files colocated with source files (*.test.ts). Mocking strategy: Mock Convex context and database operations. Coverage target: 80%+ for critical paths (soft delete, validation, filtering).
+    </standards>
+    <locations>
+      - convex/accounts/*.test.ts (account mutations and queries)
+      - convex/commands/*.test.ts (command handlers)
+      - convex/lib/*.test.ts (utility functions)
+      - tests/e2e/ (end-to-end Playwright tests)
+    </locations>
+    <ideas>
+      <test ac="4,5" desc="Verify soft delete marks account as deleted without removing from database. Verify transactions remain intact and accessible."/>
+      <test ac="9" desc="Test last account protection: attempt to delete only remaining account should fail with specific error message."/>
+      <test ac="8" desc="Test default account protection: attempt to delete default account should fail until another account is set as default."/>
+      <test ac="5,14" desc="Verify transaction preservation: create account with transactions, delete account, verify transactions still queryable with deleted indicator."/>
+      <test ac="12,13" desc="Verify deleted accounts filtered from list queries and balance calculations. Test includeDeleted parameter."/>
+      <test ac="6,7,10" desc="Test confirmation message generation with balance warning and transaction count."/>
+      <test ac="20" desc="Test cancel flow at each step: account selection cancel, confirmation cancel. Verify no side effects."/>
+      <test ac="1,3,18" desc="Test intent detection with various Arabic and English phrasings. Test regex fallback when RORK fails."/>
+      <test ac="19" desc="Performance test: measure end-to-end delete flow execution time, ensure &lt; 4 seconds."/>
+      <test ac="2" desc="Test account selection scenarios: zero accounts (error), single account (auto-select with validation), multiple accounts (numbered list)."/>
+    </ideas>
+  </tests>
+</story-context>

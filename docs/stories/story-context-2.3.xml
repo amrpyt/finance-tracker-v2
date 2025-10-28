@@ -1,0 +1,341 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>Edit Account Details</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-16T01:28:00+03:00</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>d:/Vibe Coding/Finance-Tracker-v2.0/docs/stories/story-2.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>registered user</asA>
+    <iWant>to edit my account details (name, type) using natural language commands like "عدل حساب المحفظة" or "edit my bank account"</iWant>
+    <soThat>I can keep my account information accurate and organized without losing any transaction history</soThat>
+    <tasks>
+      - Task 1: Create Edit Account Command Handler (AC: #1, #3, #15, #17)
+      - Task 2: Create Account Selection Flow (AC: #2, #20)
+      - Task 3: Create Edit Options Menu (AC: #5, #6, #7, #20)
+      - Task 4: Create Name Edit Handler (AC: #6, #13, #14)
+      - Task 5: Create Type Edit Handler (AC: #7, #13)
+      - Task 6: Create Account Update Mutation (AC: #4, #9, #10, #11, #19)
+      - Task 7: Update Webhook Callback Handler (AC: #2, #5, #6, #7, #8, #12, #16, #20)
+      - Task 8: Create Conversation State Manager (AC: #6, #7, #20)
+      - Task 9: Update Webhook Text Message Handler (AC: #6, #16)
+      - Task 10: Create Success Response Handler (AC: #12)
+      - Task 11: Add Edit Account to NL Parser (AC: #1, #3)
+      - Task 12: Create Integration Tests (AC: #1-20)
+      - Task 13: Add to Command Registry (AC: #1)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Intent Detection - AI parser (RORK) detects "edit_account" intent from natural language with 85%+ confidence from commands like "عدل الحساب", "edit account", "change account name", "غير نوع الحساب"
+    
+    AC2: Account Selection - If user has multiple accounts, displays numbered list with account details (emoji, name, type, balance) for user to select which account to edit
+    
+    AC3: Bilingual Support - Accepts both Arabic ("عدل حساب البنك", "غير اسم المحفظة") and English ("edit bank account", "change wallet name") inputs with equivalent accuracy
+    
+    AC4: Editable Fields - Allows editing only: account name (string, max 50 chars) and account type (bank, cash, credit_card, digital_wallet); balance and currency are NOT editable
+    
+    AC5: Edit Options Menu - Shows inline keyboard with edit options: "✏️ تعديل الاسم" (Edit Name), "🔄 تغيير النوع" (Change Type), "❌ إلغاء" (Cancel)
+    
+    AC6: Name Edit Flow - When editing name: prompts "أدخل الاسم الجديد:" → validates name (not empty, ≤50 chars, unique for user) → shows confirmation with old/new name → updates on approval
+    
+    AC7: Type Edit Flow - When editing type: shows type selection keyboard (🏦 Bank, 💵 Cash, 💳 Credit Card, 📱 Digital Wallet) → shows confirmation with old/new type → updates on approval
+    
+    AC8: Confirmation Workflow - Before saving changes, displays confirmation message showing: "الحساب: [old_name] → [new_name]" or "النوع: [old_type] → [new_type]" with inline keyboard: "تأكيد ✅" / "إلغاء ❌"
+    
+    AC9: Transaction Preservation - Editing account does NOT affect existing transactions; all transactions remain linked to account via accountId with transaction history intact
+    
+    AC10: Balance Preservation - Balance remains unchanged when editing name or type; only transactions can modify balance
+    
+    AC11: Default Account Status - If editing the default account, maintains isDefault=true; provides option to transfer default status to another account
+    
+    AC12: Success Response - Sends confirmation: "✅ تم تحديث الحساب بنجاح!\n📝 الاسم الجديد: [name]\n🏦 النوع: [type]\nالرصيد: [balance] [currency]" and displays updated accounts overview
+    
+    AC13: Validation Rules - Enforces: name not empty, name ≤50 characters, name unique per user (case-insensitive), type is valid enum value
+    
+    AC14: Duplicate Name Prevention - If new name matches existing account name (case-insensitive), shows error: "يوجد حساب آخر بنفس الاسم. اختر اسم مختلف" with retry prompt
+    
+    AC15: Error Handling - If account not found or user doesn't own account, shows error: "الحساب غير موجود"; if AI confidence < 0.7, asks clarifying questions with account selection list
+    
+    AC16: Message History - Stores all messages (user request, account selection, edit choice, new value input, confirmation, success) in messages table with intent and entities
+    
+    AC17: Fallback Regex - If RORK API fails, falls back to regex patterns for Arabic/English edit account commands
+    
+    AC18: Performance - Complete edit flow (message → AI parsing → selection → edit → confirmation → update → response) in < 5 seconds
+    
+    AC19: Audit Trail - Updates updatedAt timestamp on account record; maintains original createdAt; no soft delete flag change
+    
+    AC20: Cancel Anytime - User can cancel at any step (account selection, edit choice, value input, confirmation) with "إلغاء" button or message
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR2: Account Management</section>
+        <snippet>Edit account details (name, type) - Archive/delete accounts (soft delete with transaction preservation)</snippet>
+        <reason>Defines core requirement for editing account details while preserving transaction history</reason>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>Database Schema - accounts table</section>
+        <snippet>Fields: userId, name, type, balance, currency, isDefault, isDeleted, createdAt, updatedAt. Editable: name, type only. Protected: balance (transaction-controlled), currency (immutable), isDefault (separate flow)</snippet>
+        <reason>Specifies which account fields are editable and which are protected from direct editing</reason>
+      </doc>
+      <doc>
+        <path>docs/solution-architecture.md</path>
+        <title>Solution Architecture</title>
+        <section>AI Integration Architecture - Intent Detection</section>
+        <snippet>Intent Schema includes: create_account, view_accounts, edit_account, delete_account. AI for understanding, manual code for execution. Confidence threshold: 0.7</snippet>
+        <reason>Defines how edit_account intent should be detected and routed through the system</reason>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 2: Account Management</section>
+        <snippet>Story 3: Edit Account - Modify account details while preserving transactions. Success Criteria: Account creation < 30 seconds, support 10+ accounts, accurate balance calculations</snippet>
+        <reason>Provides epic-level context and success criteria for account editing functionality</reason>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Story 2.1: Create Account with Natural Language</title>
+        <section>Confirmation Workflow Pattern</section>
+        <snippet>Reuse confirmation workflow pattern, pending actions mechanism, inline keyboard utilities, account formatter for display</snippet>
+        <reason>Story 2.3 should reuse the same confirmation patterns established in account creation</reason>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: View Accounts with Balance Overview</title>
+        <section>Account Display</section>
+        <snippet>Reuse account overview display, account grouping by type, default account indicator</snippet>
+        <reason>Edit account success response should display accounts using the same formatting as view accounts</reason>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>convex/schema.ts</path>
+        <kind>schema</kind>
+        <symbol>accounts</symbol>
+        <lines>107-125</lines>
+        <reason>Defines accounts table structure with editable fields (name, type, updatedAt) and protected fields (balance, currency, createdAt)</reason>
+      </artifact>
+      <artifact>
+        <path>convex/accounts/create.ts</path>
+        <kind>mutation</kind>
+        <symbol>create</symbol>
+        <lines>1-150</lines>
+        <reason>Reference implementation for account mutations with validation patterns, name uniqueness checks, and default account handling</reason>
+      </artifact>
+      <artifact>
+        <path>convex/accounts/getByName.ts</path>
+        <kind>query</kind>
+        <symbol>getByName</symbol>
+        <lines>1-50</lines>
+        <reason>Used for duplicate name validation during edit - must check case-insensitive uniqueness excluding current account</reason>
+      </artifact>
+      <artifact>
+        <path>convex/accounts/getById.ts</path>
+        <kind>query</kind>
+        <symbol>getById</symbol>
+        <lines>1-50</lines>
+        <reason>Retrieves account details for edit operations - validates user ownership and account existence</reason>
+      </artifact>
+      <artifact>
+        <path>convex/accounts/list.ts</path>
+        <kind>query</kind>
+        <symbol>list</symbol>
+        <lines>1-60</lines>
+        <reason>Used for account selection flow when user has multiple accounts - displays all active accounts</reason>
+      </artifact>
+      <artifact>
+        <path>convex/ai/nlParser.ts</path>
+        <kind>action</kind>
+        <symbol>parseAccountIntent</symbol>
+        <lines>45-250</lines>
+        <reason>Must be extended to detect edit_account intent with entities: accountId, accountName, newName, newType</reason>
+      </artifact>
+      <artifact>
+        <path>convex/telegram/webhook.ts</path>
+        <kind>httpAction</kind>
+        <symbol>webhook</symbol>
+        <lines>1-400</lines>
+        <reason>Main entry point for handling messages and callback queries - must route edit_account intent and handle multi-step conversation states</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/confirmationHandler.ts</path>
+        <kind>utility</kind>
+        <symbol>sendAccountConfirmation</symbol>
+        <lines>1-100</lines>
+        <reason>Reusable confirmation pattern for edit operations - shows old vs new values before applying changes</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/keyboards.ts</path>
+        <kind>utility</kind>
+        <symbol>keyboard builders</symbol>
+        <lines>1-200</lines>
+        <reason>Contains inline keyboard builders for account selection, edit options menu, type selection, and confirmation buttons</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/accountFormatter.ts</path>
+        <kind>utility</kind>
+        <symbol>formatAccountsOverview</symbol>
+        <lines>1-150</lines>
+        <reason>Used in success response to display updated accounts overview with proper formatting and emoji</reason>
+      </artifact>
+      <artifact>
+        <path>convex/lib/responseHelpers.ts</path>
+        <kind>utility</kind>
+        <symbol>response formatters</symbol>
+        <lines>1-100</lines>
+        <reason>Contains bilingual response templates - must add sendAccountUpdateSuccess() for edit confirmation messages</reason>
+      </artifact>
+      <artifact>
+        <path>convex/pendingActions/createPending.ts</path>
+        <kind>mutation</kind>
+        <symbol>createPending</symbol>
+        <lines>1-50</lines>
+        <reason>Stores pending edit confirmations with 5-minute expiration - links callback buttons to edit actions</reason>
+      </artifact>
+      <artifact>
+        <path>convex/pendingActions/getPending.ts</path>
+        <kind>query</kind>
+        <symbol>getPending</symbol>
+        <lines>1-40</lines>
+        <reason>Retrieves pending action data when user clicks confirmation button - validates action hasn't expired</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="convex" version="1.16.5">Serverless backend platform - provides database, mutations, queries, actions, and HTTP endpoints</package>
+        <package name="zod" version="3.23.8">Schema validation for input validation, entity extraction, and type safety</package>
+        <package name="pino" version="9.4.0">Structured logging for debugging intent detection and edit flows</package>
+        <package name="date-fns" version="3.6.0">Date handling for timestamps (createdAt, updatedAt)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - CRITICAL: Never modify balance, currency, isDefault, isDeleted, or createdAt fields during edit operations
+    - CRITICAL: All account edits must preserve transaction history - transactions remain linked via accountId
+    - Multi-step conversation flow requires conversation state management (new pattern for this project)
+    - Name uniqueness must be case-insensitive and exclude the current account being edited
+    - Edit operations must update updatedAt timestamp but preserve createdAt
+    - Confirmation required before applying any changes (follows established pattern from story 2.1)
+    - User can cancel at any step - must clean up conversation state and pending actions
+    - If editing default account, maintain isDefault=true (separate story will handle transferring default status)
+    - All messages in the edit flow must be stored in messages table for conversation history
+    - Performance target: Complete edit flow in < 5 seconds end-to-end
+    - Bilingual support: All prompts, menus, and confirmations must work in Arabic and English
+    - Error messages must be clear and actionable in user's preferred language
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>accounts.update</name>
+      <kind>mutation</kind>
+      <signature>update(userId: Id&lt;users&gt;, accountId: Id&lt;accounts&gt;, updates: { name?: string, type?: AccountType }): Promise&lt;Account&gt;</signature>
+      <path>convex/accounts/update.ts</path>
+      <description>Core mutation for updating account name and/or type. Validates user ownership, name uniqueness, and field constraints. Returns updated account object.</description>
+    </interface>
+    <interface>
+      <name>accounts.getById</name>
+      <kind>query</kind>
+      <signature>getById(accountId: Id&lt;accounts&gt;): Promise&lt;Account | null&gt;</signature>
+      <path>convex/accounts/getById.ts</path>
+      <description>Retrieves account by ID. Used to fetch current account details before editing and to validate user ownership.</description>
+    </interface>
+    <interface>
+      <name>accounts.getByName</name>
+      <kind>query</kind>
+      <signature>getByName(userId: Id&lt;users&gt;, name: string): Promise&lt;Account | null&gt;</signature>
+      <path>convex/accounts/getByName.ts</path>
+      <description>Case-insensitive name lookup for duplicate prevention. Must exclude current account when validating new name.</description>
+    </interface>
+    <interface>
+      <name>accounts.list</name>
+      <kind>query</kind>
+      <signature>list(userId: Id&lt;users&gt;): Promise&lt;Account[]&gt;</signature>
+      <path>convex/accounts/list.ts</path>
+      <description>Returns all active accounts for user. Used in account selection flow when user has multiple accounts.</description>
+    </interface>
+    <interface>
+      <name>ai.nlParser.parseAccountIntent</name>
+      <kind>action</kind>
+      <signature>parseAccountIntent(userMessage: string, language: 'ar' | 'en'): Promise&lt;IntentDetectionResult&gt;</signature>
+      <path>convex/ai/nlParser.ts</path>
+      <description>Detects edit_account intent and extracts entities. Must be extended to support edit_account intent with optional entities: accountId, accountName, newName, newType.</description>
+    </interface>
+    <interface>
+      <name>conversationStates.set</name>
+      <kind>mutation</kind>
+      <signature>set(userId: Id&lt;users&gt;, stateType: string, stateData: any, expiresAt: number): Promise&lt;Id&lt;conversationStates&gt;&gt;</signature>
+      <path>convex/conversationStates/set.ts</path>
+      <description>NEW - Stores conversation state for multi-step flows. State types: "awaiting_account_name", "awaiting_account_selection". Expires after 10 minutes.</description>
+    </interface>
+    <interface>
+      <name>conversationStates.get</name>
+      <kind>query</kind>
+      <signature>get(userId: Id&lt;users&gt;): Promise&lt;ConversationState | null&gt;</signature>
+      <path>convex/conversationStates/get.ts</path>
+      <description>NEW - Retrieves active conversation state for user. Returns null if no active state or state expired.</description>
+    </interface>
+    <interface>
+      <name>conversationStates.clear</name>
+      <kind>mutation</kind>
+      <signature>clear(userId: Id&lt;users&gt;): Promise&lt;void&gt;</signature>
+      <path>convex/conversationStates/clear.ts</path>
+      <description>NEW - Clears conversation state after completion or cancellation. Called when edit flow completes or user cancels.</description>
+    </interface>
+    <interface>
+      <name>pendingActions.createPending</name>
+      <kind>mutation</kind>
+      <signature>createPending(userId: Id&lt;users&gt;, actionType: string, actionData: any, messageId: number): Promise&lt;Id&lt;pendingActions&gt;&gt;</signature>
+      <path>convex/pendingActions/createPending.ts</path>
+      <description>Stores pending confirmation with 5-minute expiration. Action types: "confirm_edit_name", "confirm_edit_type".</description>
+    </interface>
+    <interface>
+      <name>telegram.sendMessage</name>
+      <kind>action</kind>
+      <signature>sendMessage(chatId: string, text: string, options?: { reply_markup?: InlineKeyboard }): Promise&lt;Message&gt;</signature>
+      <path>convex/telegram/sendMessage.ts</path>
+      <description>Sends message to user via Telegram Bot API. Used for prompts, confirmations, and success messages throughout edit flow.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Vitest framework with unit tests for mutations/queries and integration tests for complete flows. All tests use TypeScript with strict type checking. Test files colocated with source files using .test.ts suffix. Mock Convex context and Telegram API calls. Target: 80%+ code coverage for critical paths.
+    </standards>
+    <locations>
+      - convex/**/*.test.ts (unit tests)
+      - tests/e2e/ (Playwright end-to-end tests)
+    </locations>
+    <ideas>
+      <test ac="AC1,AC3">Test edit_account intent detection with Arabic and English commands - verify 85%+ confidence and correct entity extraction</test>
+      <test ac="AC2">Test account selection flow with multiple accounts - verify numbered list display and selection handling</test>
+      <test ac="AC4,AC13">Test validation rules - name length, empty name, invalid type, attempting to edit protected fields (balance, currency)</test>
+      <test ac="AC6">Test name edit flow - prompt → input → validation → confirmation → update - verify complete multi-step flow</test>
+      <test ac="AC7">Test type edit flow - type selection keyboard → confirmation → update - verify type changes correctly</test>
+      <test ac="AC8">Test confirmation workflow - verify old vs new values displayed correctly before applying changes</test>
+      <test ac="AC9,AC10">Test transaction and balance preservation - create transactions, edit account, verify transactions unchanged and balance intact</test>
+      <test ac="AC11">Test default account handling - edit default account, verify isDefault remains true</test>
+      <test ac="AC12">Test success response - verify bilingual success message and accounts overview display</test>
+      <test ac="AC14">Test duplicate name prevention - attempt to rename account to existing name (case-insensitive), verify error and retry</test>
+      <test ac="AC15">Test error handling - account not found, user doesn't own account, low AI confidence with clarification</test>
+      <test ac="AC16">Test message history - verify all messages stored with intent and entities throughout edit flow</test>
+      <test ac="AC17">Test fallback regex - simulate RORK API failure, verify regex patterns detect edit commands</test>
+      <test ac="AC18">Test performance - measure end-to-end edit flow time, verify < 5 seconds</test>
+      <test ac="AC19">Test audit trail - verify updatedAt changes, createdAt preserved, isDeleted unchanged</test>
+      <test ac="AC20">Test cancel functionality - cancel at each step (selection, edit choice, input, confirmation), verify state cleanup</test>
+      <test ac="AC1-20">Integration test - complete edit flow end-to-end with single account (auto-select)</test>
+      <test ac="AC1-20">Integration test - complete edit flow with multiple accounts (selection required)</test>
+      <test ac="AC8">Test conversation state expiration - start edit flow, wait 10 minutes, verify state expired and cleaned up</test>
+    </ideas>
+  </tests>
+</story-context>

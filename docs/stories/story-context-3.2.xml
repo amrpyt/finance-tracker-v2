@@ -1,0 +1,152 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>AI Income Logging</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-18</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>registered user with at least one active account</asA>
+    <iWant>to log income transactions using natural language in Arabic or English (e.g., "استلمت راتب 5000 جنيه" or "received 500 freelance payment")</iWant>
+    <soThat>I can quickly track my earnings without filling out forms or navigating complex menus, while the AI automatically extracts amount, category, description, and account details with 85%+ accuracy</soThat>
+    <tasks>
+      <task id="1">Extend Income Intent Parser - Create parseIncomeIntent.ts action with RORK /text/llm/ endpoint</task>
+      <task id="2">Extend Category Mapper for Income - Add income categories (salary, freelance, business, investment, gift)</task>
+      <task id="3">Reuse Date Parser - Use existing dateParser.ts utility</task>
+      <task id="4">Reuse Account Selector - Use existing accountSelector.ts with actionType="income"</task>
+      <task id="5">Create Income Confirmation Builder - Build incomeConfirmation.ts utility</task>
+      <task id="6">Create Income Transaction Mutation - Build createIncome.ts with balance INCREASE (+=)</task>
+      <task id="7">Create Income Success Response Handler - Add sendIncomeSuccess() to responseHelpers.ts</task>
+      <task id="8">Create Log Income Command Handler - Build logIncomeCommand.ts</task>
+      <task id="9">Update Webhook Callback Handler - Handle income confirmations and cancellations</task>
+      <task id="10">Handle Account Selection Callback - Process account selection for income</task>
+      <task id="11">Update AI Parser for Income Intent - Add log_income patterns to nlParser.ts</task>
+      <task id="12">Create Pending Income Storage - Reuse pendingActions table</task>
+      <task id="13">Create Income Error Recovery Messages - Add getIncomeErrorMessage()</task>
+      <task id="14">Add Integration Tests - Test Arabic/English income intent detection and balance increase</task>
+      <task id="15">Performance Optimization - Reuse indexes and unified parser</task>
+      <task id="16">Update Help Documentation - Add income logging examples</task>
+      <task id="17">Update Webhook Intent Routing - Add log_income case</task>
+      <task id="18">Update Feature Registry - Set income logging available: true in prompts.ts</task>
+      <task id="19">Add Income Constants - Define callback patterns and category emojis</task>
+      <task id="20">Add Income Category Definitions - Define INCOME_CATEGORIES in types.ts</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Natural Language Input - Accept income logging via conversational text in Arabic/English without rigid syntax</criterion>
+    <criterion id="AC2">AI Entity Extraction - RORK AI extracts amount, category, description, account with 85%+ accuracy</criterion>
+    <criterion id="AC3">Intent Detection - AI detects log_income intent with 85%+ confidence</criterion>
+    <criterion id="AC4">Bilingual Support - Handles Arabic and English with equivalent accuracy, supports mixed language</criterion>
+    <criterion id="AC5">Default Account Assignment - Uses default account if not specified, prompts if no default</criterion>
+    <criterion id="AC6">Category Auto-Assignment - AI assigns income category with 85%+ accuracy</criterion>
+    <criterion id="AC7">Confirmation Workflow - Displays extracted details with inline keyboard [نعم ✅] [إلغاء ❌]</criterion>
+    <criterion id="AC8">Balance Increase - Creates income transaction, INCREASES balance (not decrease)</criterion>
+    <criterion id="AC9">Success Response - Sends confirmation within 2 seconds</criterion>
+    <criterion id="AC10">Income-Specific Emoji - Uses 💰 instead of 💸</criterion>
+    <criterion id="AC11">Cancel Flow - Discards data on cancel or timeout (5 min)</criterion>
+    <criterion id="AC12">Date Support - Extracts dates from Arabic/English phrases, defaults to current</criterion>
+    <criterion id="AC13">Amount Validation - Validates 0 < amount < 1,000,000</criterion>
+    <criterion id="AC14">Category Validation - Asks user if AI confidence < 70%</criterion>
+    <criterion id="AC15">Message History Storage - Stores all messages with intent="log_income"</criterion>
+    <criterion id="AC16">Fallback Regex - Falls back to regex extraction if RORK fails</criterion>
+    <criterion id="AC17">Conversation Context - Maintains state during confirmation flow</criterion>
+    <criterion id="AC18">Multi-Account Support - Shows account selection menu if multiple accounts</criterion>
+    <criterion id="AC19">Performance - Complete flow in < 5 seconds for 95% of requests</criterion>
+    <criterion id="AC20">Error Recovery - Shows helpful error message with examples</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/EPICS.md" title="Epic Breakdown" section="Epic 3: Expense & Income Logging with AI + UX Polish">
+        Story 3.2 falls under Epic 3, which delivers natural language transaction logging powered by AI. Income logging is Story 2 of 9 in this epic. Success criteria: < 5 seconds end-to-end, 85%+ AI accuracy, support 100K+ transactions/user.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR3: Expense & Income Logging via Natural Language">
+        Log income through conversational input (e.g., "استلمت راتب 5000"). AI (RORK) extracts: amount, category, description, account. Confirmation message showing extracted details before saving. Support for both Arabic and English inputs. Automatic categorization with 85%+ accuracy.
+      </doc>
+      <doc path="docs/solution-architecture.md" title="Solution Architecture" section="AI Integration Architecture">
+        Uses RORK `/text/llm/` endpoint (NOT `/agent/chat`) for intent detection. Simple OpenAI-style request format. Intent detection returns JSON with intent, entities, confidence. Confidence threshold: 85% for financial data accuracy. All actual parsers use `/text/llm/`.
+      </doc>
+      <doc path="docs/tech-spec-epic-3.md" title="Technical Specification: Epic 3" section="Income Categories & Workflow">
+        Income categories: salary (💼راتب), freelance (💻عمل حر), business (🏢مشروع), investment (📈استثمار), gift (🎁هدية), other (💰أخرى). Workflow: Parse → Confirm → Save → Respond. Balance INCREASES (+=) not decreases. Income emoji: 💰.
+      </doc>
+      <doc path="docs/stories/story-3.1.md" title="Story 3.1: AI Expense Logging" section="Implementation Pattern">
+        Story 3.1 provides the complete expense logging pattern to reuse. Key components: parseExpenseIntent.ts (RORK parser), createExpense.ts (transaction mutation), logExpenseCommand.ts (command handler). 90% of code reusable for income - only difference is balance operation (increase vs decrease) and categories.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="convex/ai/parseExpenseIntent.ts" kind="action" symbol="parseExpenseIntent" reason="Pattern to reuse for parseIncomeIntent.ts - uses RORK /text/llm/ with fallback regex, 10-second timeout, returns intent+entities+confidence"></artifact>
+      <artifact path="convex/transactions/createExpense.ts" kind="mutation" symbol="createExpense" reason="Pattern for createIncome.ts - atomic transaction with balance update, validation, error handling. KEY DIFFERENCE: income uses balance += amount (not -=)"></artifact>
+      <artifact path="convex/commands/logExpenseCommand.ts" kind="handler" symbol="LogExpenseCommand" reason="Pattern for logIncomeCommand.ts - orchestrates parsing, confirmation, account selection, transaction creation"></artifact>
+      <artifact path="convex/lib/categoryMapper.ts" kind="utility" symbol="getCategoryFromDescription" reason="Extend for income categories - currently handles expense categories, need to add income keyword mappings"></artifact>
+      <artifact path="convex/lib/dateParser.ts" kind="utility" symbol="parseDateFromText" reason="Reuse as-is - already supports Arabic/English relative dates ('أمس', 'yesterday')"></artifact>
+      <artifact path="convex/lib/accountSelector.ts" kind="utility" symbol="selectAccount" reason="Reuse as-is - supports actionType parameter for different confirmation messages"></artifact>
+      <artifact path="convex/lib/expenseConfirmation.ts" kind="utility" symbol="buildExpenseConfirmation" reason="Pattern for buildIncomeConfirmation.ts - formats bilingual confirmation message with inline keyboard"></artifact>
+      <artifact path="convex/lib/responseHelpers.ts" kind="utility" symbol="sendExpenseSuccess" reason="Pattern for sendIncomeSuccess() - format success message with emoji, balance, category"></artifact>
+      <artifact path="convex/ai/nlParser.ts" kind="action" symbol="parseIntent" lines="345-580" reason="Unified intent parser - add log_income patterns here alongside log_expense. Already has UnifiedIntent enum structure."></artifact>
+      <artifact path="convex/ai/prompts.ts" kind="config" symbol="FEATURE_REGISTRY" reason="Update to set income logging available: true - prevents AI from saying 'under development'"></artifact>
+      <artifact path="convex/telegram/webhook.ts" kind="handler" symbol="webhook" lines="200-350" reason="Add income callback handlers (confirm_income_, cancel_income_, select_account_income_) and intent routing for log_income"></artifact>
+      <artifact path="convex/lib/constants.ts" kind="config" symbol="CALLBACK_PATTERNS" reason="Add income callback prefixes and income category emoji mapping"></artifact>
+      <artifact path="convex/ai/types.ts" kind="types" symbol="ExpenseIntent" reason="Add IncomeIntent, LogIncomeEntities, INCOME_CATEGORIES similar to expense types"></artifact>
+      <artifact path="convex/schema.ts" kind="schema" symbol="transactions" reason="Reuse existing transactions table - supports type='income', all indexes already in place"></artifact>
+      <artifact path="convex/pendingActions" kind="table" symbol="pendingActions" reason="Reuse for storing pending income confirmations - already supports different action types"></artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="convex" version="1.16.5" reason="Serverless backend with reactive database"></package>
+        <package name="zod" version="3.23.8" reason="Schema validation for AI outputs and entities"></package>
+        <package name="date-fns" version="3.6.0" reason="Date parsing for natural language dates"></package>
+        <package name="pino" version="9.4.0" reason="Structured logging for performance tracking"></package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="solution-architecture.md#AI Integration">Use RORK /text/llm/ endpoint (NOT /agent/chat) - all existing parsers use this pattern</constraint>
+    <constraint source="tech-spec-epic-3.md#Performance">Complete income logging flow in < 5 seconds for 95% of requests</constraint>
+    <constraint source="PRD.md#NFR1">AI detection must complete within 2 seconds (95th percentile)</constraint>
+    <constraint source="story-3.1.md#Lessons Learned">No Edit button in confirmation (simplified to Yes/Cancel per UX feedback)</constraint>
+    <constraint source="story-3.1.md#Performance">Add 10-second timeout to RORK API calls using AbortController</constraint>
+    <constraint source="tech-spec-epic-3.md#Balance Operations">Income INCREASES balance (balance += amount), NOT decreases - critical difference from expense</constraint>
+    <constraint source="solution-architecture.md#Data Integrity">Use atomic transactions for income creation + balance update - must be single operation</constraint>
+    <constraint source="story-3.1.md#Testing">Add comprehensive integration tests (240 test cases in Story 3.1 as reference)</constraint>
+    <constraint source="tech-spec-epic-3.md#Accuracy">85%+ confidence threshold for AI entity extraction in financial contexts</constraint>
+    <constraint source="solution-architecture.md#Bilingual">Full Arabic and English support with equivalent accuracy for all features</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="RORK /text/llm/ API" kind="HTTP REST" signature="POST ${rorkUrl}/text/llm/ with {messages: [{role, content}]}" path="convex/ai/parseExpenseIntent.ts#L235" reason="Primary AI endpoint for intent detection - returns {completion: '...'} with structured JSON"></interface>
+    <interface name="createIncome mutation" kind="Convex Mutation" signature="createIncome(userId, accountId, type='income', amount, category, description, date, aiConfidence?)" path="convex/transactions/createExpense.ts (pattern)" reason="Atomic mutation that creates income transaction and INCREASES account balance"></interface>
+    <interface name="Telegram sendMessage API" kind="HTTP REST" signature="POST /bot{token}/sendMessage with {chat_id, text, parse_mode, reply_markup}" path="convex/telegram/sendMessage.ts" reason="Send confirmation and success messages to user"></interface>
+    <interface name="Callback Query Handler" kind="Telegram Webhook" signature="callback_query: {data: 'confirm_income_{id}' | 'cancel_income_{id}' | 'select_account_income_{accountId}_{id}'}" path="convex/telegram/webhook.ts#callback_query" reason="Handle user confirmation button clicks"></interface>
+    <interface name="pendingActions CRUD" kind="Convex Queries/Mutations" signature="createPending, getPendingByConfirmationId, deletePending" path="convex/pendingActions/*.ts" reason="Store and retrieve pending income confirmations with 5-minute TTL"></interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest for unit/integration tests. Test files co-located with implementation (*.test.ts). Story 3.1 achieved 240 test cases covering: parseExpenseIntent (91 tests), createExpense (53 tests), categoryMapper (50 tests), dateParser (46 tests). Target similar coverage for income. Performance logging with PASS/FAIL status for < 5s target. All tests must pass before story marked complete.
+    </standards>
+    <locations>
+      <location>convex/ai/parseIncomeIntent.test.ts</location>
+      <location>convex/transactions/createIncome.test.ts</location>
+      <location>convex/lib/categoryMapper.test.ts (extend for income)</location>
+      <location>convex/commands/logIncomeCommand.test.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1,AC2,AC4">Test Arabic income parsing: "استلمت راتب 5000 جنيه" → {intent: log_income, amount: 5000, category: salary}</idea>
+      <idea ac="AC1,AC2,AC4">Test English income parsing: "received 500 freelance payment" → {intent: log_income, amount: 500, category: freelance}</idea>
+      <idea ac="AC4">Test mixed language: "استلمت 300 from freelance" → correct entity extraction</idea>
+      <idea ac="AC6">Test income category mapping accuracy >= 85% across all 6 categories</idea>
+      <idea ac="AC8">Test balance INCREASE correctness: initial 1000 + income 500 = final 1500 (NOT 500)</idea>
+      <idea ac="AC8">Test atomic transaction: if balance update fails, income transaction must rollback</idea>
+      <idea ac="AC13">Test amount validation: reject negative, zero, > 1,000,000</idea>
+      <idea ac="AC16">Test fallback regex when RORK fails: still extract amount and basic keywords</idea>
+      <idea ac="AC19">Test performance: 100 income logging flows complete in < 5s each (95th percentile)</idea>
+      <idea ac="AC10">Verify income emoji 💰 used (not expense emoji 💸)</idea>
+    </ideas>
+  </tests>
+</story-context>
